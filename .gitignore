@@ -34,3 +34,6 @@ Thumbs.db
 
 # Google Services (Optional: uncomment if you want to keep your API keys private)
 google-services.json
+
+# Claude
+.claude/
