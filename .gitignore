@@ -1,15 +1,36 @@
+# Gradle files
+.gradle/
+build/
+
+# Kotlin and Java
+*.class
+*.kt.js
+*.kt.js.map
+.kotlin/
+
+# IntelliJ IDEA / Android Studio
+.idea/
 *.iml
-.gradle
-/local.properties
-/.idea/caches
-/.idea/libraries
-/.idea/modules.xml
-/.idea/workspace.xml
-/.idea/navEditor.xml
-/.idea/assetWizardSettings.xml
-.DS_Store
-/build
-/captures
-.externalNativeBuild
-.cxx
+*.iws
+*.ipr
+out/
+
+# Android-specific
+captures/
+.externalNativeBuild/
+.cxx/
+*.apk
+*.ap_
+*.dex
+output.json
+
+# Local configuration files (should never be committed)
 local.properties
+secrets.xml
+
+# System files
+.DS_Store
+Thumbs.db
+
+# Google Services (Optional: uncomment if you want to keep your API keys private)
+google-services.json
