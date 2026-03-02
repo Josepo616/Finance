@@ -22,6 +22,7 @@ import androidx.compose.ui.unit.sp
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.firebase.auth.FirebaseAuth
+import josealvarez.personal.finance.ui.budget.BudgetActivity
 
 class DashboardActivity : ComponentActivity() {
 
@@ -47,7 +48,10 @@ class DashboardActivity : ComponentActivity() {
                     DashboardScreen(
                         userName = user.displayName ?: "No Name",
                         userEmail = user.email ?: "No Email",
-                        onLogoutClick = { signOut() }
+                        onLogoutClick = { signOut() },
+                        onBudgetClick = {
+                            startActivity(Intent(this@DashboardActivity, BudgetActivity::class.java))
+                        }
                     )
                 }
             }
@@ -78,7 +82,12 @@ class DashboardActivity : ComponentActivity() {
 }
 
 @Composable
-fun DashboardScreen(userName: String, userEmail: String, onLogoutClick: () -> Unit) {
+fun DashboardScreen(
+    userName: String,
+    userEmail: String,
+    onLogoutClick: () -> Unit,
+    onBudgetClick: () -> Unit
+) {
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -133,6 +142,36 @@ fun DashboardScreen(userName: String, userEmail: String, onLogoutClick: () -> Un
             }
         }
 
+        Spacer(modifier = Modifier.height(16.dp))
+
+        ElevatedCard(
+            onClick = onBudgetClick,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(8.dp),
+            shape = MaterialTheme.shapes.large
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(24.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = "Budget Limits",
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        text = "Manage your spending limits",
+                        fontSize = 14.sp,
+                        color = Color.Gray
+                    )
+                }
+            }
+        }
+
         Spacer(modifier = Modifier.weight(1f))
 
         TextButton(
@@ -156,7 +195,8 @@ fun DashboardScreenPreview() {
             DashboardScreen(
                 userName = "John Doe",
                 userEmail = "john.doe@example.com",
-                onLogoutClick = {}
+                onLogoutClick = {},
+                onBudgetClick = {}
             )
         }
     }
