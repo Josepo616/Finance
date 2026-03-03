@@ -32,6 +32,10 @@
         <activity
             android:name=".ui.budget.BudgetActivity"
             android:exported="false" />
+
+        <activity
+            android:name=".ui.expense.ExpenseActivity"
+            android:exported="false" />
             
     </application>
 
