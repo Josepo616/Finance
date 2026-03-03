@@ -23,6 +23,7 @@ import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.firebase.auth.FirebaseAuth
 import josealvarez.personal.finance.ui.budget.BudgetActivity
+import josealvarez.personal.finance.ui.expense.ExpenseActivity
 
 class DashboardActivity : ComponentActivity() {
 
@@ -51,6 +52,9 @@ class DashboardActivity : ComponentActivity() {
                         onLogoutClick = { signOut() },
                         onBudgetClick = {
                             startActivity(Intent(this@DashboardActivity, BudgetActivity::class.java))
+                        },
+                        onExpensesClick = {
+                            startActivity(Intent(this@DashboardActivity, ExpenseActivity::class.java))
                         }
                     )
                 }
@@ -86,7 +90,8 @@ fun DashboardScreen(
     userName: String,
     userEmail: String,
     onLogoutClick: () -> Unit,
-    onBudgetClick: () -> Unit
+    onBudgetClick: () -> Unit,
+    onExpensesClick: () -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -172,6 +177,36 @@ fun DashboardScreen(
             }
         }
 
+        Spacer(modifier = Modifier.height(8.dp))
+
+        ElevatedCard(
+            onClick = onExpensesClick,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(8.dp),
+            shape = MaterialTheme.shapes.large
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(24.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = "Expenses",
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        text = "Track your spending",
+                        fontSize = 14.sp,
+                        color = Color.Gray
+                    )
+                }
+            }
+        }
+
         Spacer(modifier = Modifier.weight(1f))
 
         TextButton(
@@ -196,7 +231,8 @@ fun DashboardScreenPreview() {
                 userName = "John Doe",
                 userEmail = "john.doe@example.com",
                 onLogoutClick = {},
-                onBudgetClick = {}
+                onBudgetClick = {},
+                onExpensesClick = {}
             )
         }
     }
