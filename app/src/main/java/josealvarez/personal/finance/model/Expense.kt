@@ -8,14 +8,16 @@ data class Expense(
     val category: Category = Category.OTHER,
     val description: String = "",
     val date: String = "",
-    val createdAt: Timestamp = Timestamp.now()
+    val createdAt: Timestamp = Timestamp.now(),
+    val isDeleted: Boolean = false
 ) {
     fun toMap(): Map<String, Any> = mapOf(
         "amount" to amount,
         "category" to category.name,
         "description" to description,
         "date" to date,
-        "createdAt" to createdAt
+        "createdAt" to createdAt,
+        "isDeleted" to isDeleted
     )
 
     companion object {
@@ -29,7 +31,8 @@ data class Expense(
             },
             description = map["description"] as? String ?: "",
             date = map["date"] as? String ?: "",
-            createdAt = map["createdAt"] as? Timestamp ?: Timestamp.now()
+            createdAt = map["createdAt"] as? Timestamp ?: Timestamp.now(),
+            isDeleted = map["isDeleted"] as? Boolean ?: false
         )
     }
 }
