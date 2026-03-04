@@ -3,8 +3,10 @@ package josealvarez.personal.finance.ui.expense
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import josealvarez.personal.finance.data.repository.AuditRepository
 import josealvarez.personal.finance.data.repository.BudgetRepository
 import josealvarez.personal.finance.data.repository.ExpenseRepository
+import josealvarez.personal.finance.model.AuditLog
 import josealvarez.personal.finance.model.Expense
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -24,7 +26,8 @@ data class ExpenseUiState(
 class ExpenseViewModel(
     private val uid: String,
     private val expenseRepository: ExpenseRepository = ExpenseRepository(),
-    private val budgetRepository: BudgetRepository = BudgetRepository()
+    private val budgetRepository: BudgetRepository = BudgetRepository(),
+    private val auditRepository: AuditRepository = AuditRepository()
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ExpenseUiState())
@@ -60,9 +63,19 @@ class ExpenseViewModel(
 
                 val budget = budgetRepository.getBudget(uid)
                 val updatedBudget = budget.copy(
-                    availableFunds = budget.availableFunds - expense.amount
+                    availableFunds = budget.availableFunds - expense.amount,
+                    currentWeeklyLimit = budget.currentWeeklyLimit - expense.amount
                 )
                 budgetRepository.saveBudget(uid, updatedBudget)
+
+                auditRepository.logAction(
+                    uid, AuditLog(
+                        action = "ADD_EXPENSE",
+                        details = "Added expense: ${expense.description} (${expense.category})",
+                        amount = expense.amount,
+                        metadata = mapOf("category" to expense.category.name, "date" to expense.date)
+                    )
+                )
 
                 _uiState.value = _uiState.value.copy(
                     isSaving = false,
@@ -83,13 +96,23 @@ class ExpenseViewModel(
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(errorMessage = null)
             try {
-                expenseRepository.deleteExpense(uid, expense.id)
+                expenseRepository.softDeleteExpense(uid, expense.id)
 
                 val budget = budgetRepository.getBudget(uid)
                 val updatedBudget = budget.copy(
-                    availableFunds = budget.availableFunds + expense.amount
+                    availableFunds = budget.availableFunds + expense.amount,
+                    currentWeeklyLimit = budget.currentWeeklyLimit + expense.amount
                 )
                 budgetRepository.saveBudget(uid, updatedBudget)
+
+                auditRepository.logAction(
+                    uid, AuditLog(
+                        action = "DELETE_EXPENSE",
+                        details = "Deleted expense: ${expense.description} (Restored to budget)",
+                        amount = expense.amount,
+                        metadata = mapOf("expenseId" to expense.id)
+                    )
+                )
 
                 loadExpenses()
             } catch (e: Exception) {

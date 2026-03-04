@@ -3,8 +3,10 @@ package josealvarez.personal.finance.ui.income
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import josealvarez.personal.finance.data.repository.AuditRepository
 import josealvarez.personal.finance.data.repository.BudgetRepository
 import josealvarez.personal.finance.data.repository.IncomeRepository
+import josealvarez.personal.finance.model.AuditLog
 import josealvarez.personal.finance.model.Income
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -24,7 +26,8 @@ data class IncomeUiState(
 class IncomeViewModel(
     private val uid: String,
     private val incomeRepository: IncomeRepository = IncomeRepository(),
-    private val budgetRepository: BudgetRepository = BudgetRepository()
+    private val budgetRepository: BudgetRepository = BudgetRepository(),
+    private val auditRepository: AuditRepository = AuditRepository()
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(IncomeUiState())
@@ -64,6 +67,15 @@ class IncomeViewModel(
                 )
                 budgetRepository.saveBudget(uid, updatedBudget)
 
+                auditRepository.logAction(
+                    uid, AuditLog(
+                        action = "ADD_INCOME",
+                        details = "Added income: ${income.description} (${income.category})",
+                        amount = income.amount,
+                        metadata = mapOf("category" to income.category.name, "date" to income.date)
+                    )
+                )
+
                 _uiState.value = _uiState.value.copy(
                     isSaving = false,
                     saveSuccess = true,
@@ -83,13 +95,22 @@ class IncomeViewModel(
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(errorMessage = null)
             try {
-                incomeRepository.deleteIncome(uid, income.id)
+                incomeRepository.softDeleteIncome(uid, income.id)
 
                 val budget = budgetRepository.getBudget(uid)
                 val updatedBudget = budget.copy(
                     availableFunds = budget.availableFunds - income.amount
                 )
                 budgetRepository.saveBudget(uid, updatedBudget)
+
+                auditRepository.logAction(
+                    uid, AuditLog(
+                        action = "DELETE_INCOME",
+                        details = "Deleted income: ${income.description} (Deducted from budget)",
+                        amount = income.amount,
+                        metadata = mapOf("incomeId" to income.id)
+                    )
+                )
 
                 loadIncome()
             } catch (e: Exception) {
