@@ -37,3 +37,7 @@ google-services.json
 
 # Claude
 .claude/
+
+# Gemini
+.gemini/
+GEMINI.md
