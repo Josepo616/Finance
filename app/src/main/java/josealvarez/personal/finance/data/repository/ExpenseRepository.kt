@@ -30,6 +30,7 @@ class ExpenseRepository {
                 .collection("expenses")
                 .whereGreaterThanOrEqualTo("date", startDate)
                 .whereLessThan("date", endDate)
+                .whereEqualTo("isDeleted", false)
                 .orderBy("date", com.google.firebase.firestore.Query.Direction.DESCENDING)
                 .get(Source.SERVER)
                 .await()
@@ -38,6 +39,7 @@ class ExpenseRepository {
                 .collection("expenses")
                 .whereGreaterThanOrEqualTo("date", startDate)
                 .whereLessThan("date", endDate)
+                .whereEqualTo("isDeleted", false)
                 .orderBy("date", com.google.firebase.firestore.Query.Direction.DESCENDING)
                 .get(Source.CACHE)
                 .await()
@@ -48,10 +50,57 @@ class ExpenseRepository {
         }
     }
 
-    suspend fun deleteExpense(uid: String, expenseId: String) {
+    suspend fun getExpensesAfterDate(uid: String, startDate: String): List<Expense> {
+        val snapshot = try {
+            db.collection("users").document(uid)
+                .collection("expenses")
+                .whereGreaterThanOrEqualTo("date", startDate)
+                .whereEqualTo("isDeleted", false)
+                .get(Source.SERVER)
+                .await()
+        } catch (e: Exception) {
+            db.collection("users").document(uid)
+                .collection("expenses")
+                .whereGreaterThanOrEqualTo("date", startDate)
+                .whereEqualTo("isDeleted", false)
+                .get(Source.CACHE)
+                .await()
+        }
+
+        return snapshot.documents.mapNotNull { doc ->
+            doc.data?.let { Expense.fromMap(doc.id, it) }
+        }
+    }
+
+    suspend fun getExpensesInRange(uid: String, startDate: String, endDate: String): List<Expense> {
+        val snapshot = try {
+            db.collection("users").document(uid)
+                .collection("expenses")
+                .whereGreaterThanOrEqualTo("date", startDate)
+                .whereLessThanOrEqualTo("date", endDate)
+                .whereEqualTo("isDeleted", false)
+                .get(Source.SERVER)
+                .await()
+        } catch (e: Exception) {
+            db.collection("users").document(uid)
+                .collection("expenses")
+                .whereGreaterThanOrEqualTo("date", startDate)
+                .whereLessThanOrEqualTo("date", endDate)
+                .whereEqualTo("isDeleted", false)
+                .get(Source.CACHE)
+                .await()
+        }
+
+        return snapshot.documents.mapNotNull { doc ->
+            doc.data?.let { Expense.fromMap(doc.id, it) }
+        }
+    }
+
+    suspend fun softDeleteExpense(uid: String, expenseId: String) {
         db.collection("users").document(uid)
             .collection("expenses")
             .document(expenseId)
-            .delete()
+            .update("isDeleted", true)
+            .await()
     }
 }
