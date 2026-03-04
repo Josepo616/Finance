@@ -36,7 +36,11 @@
         <activity
             android:name=".ui.expense.ExpenseActivity"
             android:exported="false" />
-            
+
+        <activity
+            android:name=".ui.income.IncomeActivity"
+            android:exported="false" />
+
     </application>
 
 </manifest>

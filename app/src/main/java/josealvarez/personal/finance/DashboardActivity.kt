@@ -24,6 +24,7 @@ import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.firebase.auth.FirebaseAuth
 import josealvarez.personal.finance.ui.budget.BudgetActivity
 import josealvarez.personal.finance.ui.expense.ExpenseActivity
+import josealvarez.personal.finance.ui.income.IncomeActivity
 
 class DashboardActivity : ComponentActivity() {
 
@@ -55,6 +56,9 @@ class DashboardActivity : ComponentActivity() {
                         },
                         onExpensesClick = {
                             startActivity(Intent(this@DashboardActivity, ExpenseActivity::class.java))
+                        },
+                        onIncomeClick = {
+                            startActivity(Intent(this@DashboardActivity, IncomeActivity::class.java))
                         }
                     )
                 }
@@ -91,7 +95,8 @@ fun DashboardScreen(
     userEmail: String,
     onLogoutClick: () -> Unit,
     onBudgetClick: () -> Unit,
-    onExpensesClick: () -> Unit
+    onExpensesClick: () -> Unit,
+    onIncomeClick: () -> Unit = {}
 ) {
     Column(
         modifier = Modifier
@@ -200,6 +205,36 @@ fun DashboardScreen(
                     )
                     Text(
                         text = "Track your spending",
+                        fontSize = 14.sp,
+                        color = Color.Gray
+                    )
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        ElevatedCard(
+            onClick = onIncomeClick,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(8.dp),
+            shape = MaterialTheme.shapes.large
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(24.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = "Income",
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        text = "Track your earnings",
                         fontSize = 14.sp,
                         color = Color.Gray
                     )
