@@ -30,6 +30,7 @@ class IncomeRepository {
                 .collection("income")
                 .whereGreaterThanOrEqualTo("date", startDate)
                 .whereLessThan("date", endDate)
+                .whereEqualTo("isDeleted", false)
                 .orderBy("date", com.google.firebase.firestore.Query.Direction.DESCENDING)
                 .get(Source.SERVER)
                 .await()
@@ -38,6 +39,7 @@ class IncomeRepository {
                 .collection("income")
                 .whereGreaterThanOrEqualTo("date", startDate)
                 .whereLessThan("date", endDate)
+                .whereEqualTo("isDeleted", false)
                 .orderBy("date", com.google.firebase.firestore.Query.Direction.DESCENDING)
                 .get(Source.CACHE)
                 .await()
@@ -48,10 +50,11 @@ class IncomeRepository {
         }
     }
 
-    suspend fun deleteIncome(uid: String, incomeId: String) {
+    suspend fun softDeleteIncome(uid: String, incomeId: String) {
         db.collection("users").document(uid)
             .collection("income")
             .document(incomeId)
-            .delete()
+            .update("isDeleted", true)
+            .await()
     }
 }
