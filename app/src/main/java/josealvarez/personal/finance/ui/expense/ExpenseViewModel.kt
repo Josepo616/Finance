@@ -5,8 +5,10 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import josealvarez.personal.finance.data.repository.AuditRepository
 import josealvarez.personal.finance.data.repository.BudgetRepository
+import josealvarez.personal.finance.data.repository.CategoryRepository
 import josealvarez.personal.finance.data.repository.ExpenseRepository
 import josealvarez.personal.finance.model.AuditLog
+import josealvarez.personal.finance.model.Category
 import josealvarez.personal.finance.model.Expense
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -16,6 +18,7 @@ import java.util.Calendar
 
 data class ExpenseUiState(
     val expenses: List<Expense> = emptyList(),
+    val categories: List<Category> = emptyList(),
     val isLoading: Boolean = false,
     val isSaving: Boolean = false,
     val errorMessage: String? = null,
@@ -27,7 +30,8 @@ class ExpenseViewModel(
     private val uid: String,
     private val expenseRepository: ExpenseRepository = ExpenseRepository(),
     private val budgetRepository: BudgetRepository = BudgetRepository(),
-    private val auditRepository: AuditRepository = AuditRepository()
+    private val auditRepository: AuditRepository = AuditRepository(),
+    private val categoryRepository: CategoryRepository = CategoryRepository()
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ExpenseUiState())
@@ -35,6 +39,7 @@ class ExpenseViewModel(
 
     init {
         loadExpenses()
+        loadCategories()
     }
 
     fun loadExpenses() {
@@ -55,6 +60,17 @@ class ExpenseViewModel(
         }
     }
 
+    fun loadCategories() {
+        viewModelScope.launch {
+            try {
+                val categories = categoryRepository.getCategories(uid)
+                _uiState.value = _uiState.value.copy(categories = categories)
+            } catch (e: Exception) {
+                // Silently fail or log
+            }
+        }
+    }
+
     fun addExpense(expense: Expense) {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isSaving = true, errorMessage = null, saveSuccess = false)
@@ -62,18 +78,37 @@ class ExpenseViewModel(
                 expenseRepository.addExpense(uid, expense)
 
                 val budget = budgetRepository.getBudget(uid)
-                val updatedBudget = budget.copy(
-                    availableFunds = budget.availableFunds - expense.amount,
-                    currentWeeklyLimit = budget.currentWeeklyLimit - expense.amount
-                )
+                
+                // Fetch category to check exclusion rule
+                val category = if (expense.categoryId.isNotBlank()) {
+                    categoryRepository.getCategoryById(uid, expense.categoryId)
+                } else {
+                    null
+                }
+
+                val exclude = category?.excludeFromWeeklyLimit ?: false
+                
+                val updatedBudget = if (exclude) {
+                    budget.copy(availableFunds = budget.availableFunds - expense.amount)
+                } else {
+                    budget.copy(
+                        availableFunds = budget.availableFunds - expense.amount,
+                        currentWeeklyLimit = budget.currentWeeklyLimit - expense.amount
+                    )
+                }
                 budgetRepository.saveBudget(uid, updatedBudget)
 
                 auditRepository.logAction(
                     uid, AuditLog(
                         action = "ADD_EXPENSE",
-                        details = "Added expense: ${expense.description} (${expense.category})",
+                        details = "Added expense: ${expense.description} (${expense.categoryName})",
                         amount = expense.amount,
-                        metadata = mapOf("category" to expense.category.name, "date" to expense.date)
+                        metadata = mapOf(
+                            "categoryId" to expense.categoryId,
+                            "categoryName" to expense.categoryName,
+                            "date" to expense.date,
+                            "excluded" to exclude
+                        )
                     )
                 )
 
@@ -99,10 +134,24 @@ class ExpenseViewModel(
                 expenseRepository.softDeleteExpense(uid, expense.id)
 
                 val budget = budgetRepository.getBudget(uid)
-                val updatedBudget = budget.copy(
-                    availableFunds = budget.availableFunds + expense.amount,
-                    currentWeeklyLimit = budget.currentWeeklyLimit + expense.amount
-                )
+                
+                // Fetch category to check exclusion rule
+                val category = if (expense.categoryId.isNotBlank()) {
+                    categoryRepository.getCategoryById(uid, expense.categoryId)
+                } else {
+                    null
+                }
+                
+                val exclude = category?.excludeFromWeeklyLimit ?: false
+
+                val updatedBudget = if (exclude) {
+                    budget.copy(availableFunds = budget.availableFunds + expense.amount)
+                } else {
+                    budget.copy(
+                        availableFunds = budget.availableFunds + expense.amount,
+                        currentWeeklyLimit = budget.currentWeeklyLimit + expense.amount
+                    )
+                }
                 budgetRepository.saveBudget(uid, updatedBudget)
 
                 auditRepository.logAction(
@@ -110,7 +159,7 @@ class ExpenseViewModel(
                         action = "DELETE_EXPENSE",
                         details = "Deleted expense: ${expense.description} (Restored to budget)",
                         amount = expense.amount,
-                        metadata = mapOf("expenseId" to expense.id)
+                        metadata = mapOf("expenseId" to expense.id, "excluded" to exclude)
                     )
                 )
 
@@ -125,6 +174,7 @@ class ExpenseViewModel(
 
     fun showAddForm() {
         _uiState.value = _uiState.value.copy(showAddScreen = true)
+        loadCategories() // Refresh categories when showing form
     }
 
     fun hideAddForm() {

@@ -32,11 +32,17 @@ fun AddExpenseScreen(
     val dateFormat = remember { SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()) }
 
     var amount by remember { mutableStateOf("") }
-    var selectedCategory by remember { mutableStateOf(Category.OTHER) }
+    var selectedCategory by remember { mutableStateOf<Category?>(null) }
     var description by remember { mutableStateOf("") }
     var dateText by remember { mutableStateOf(dateFormat.format(Date())) }
     var showDatePicker by remember { mutableStateOf(false) }
     var categoryExpanded by remember { mutableStateOf(false) }
+
+    LaunchedEffect(uiState.categories) {
+        if (selectedCategory == null && uiState.categories.isNotEmpty()) {
+            selectedCategory = uiState.categories.find { it.name == "Other" } ?: uiState.categories.first()
+        }
+    }
 
     LaunchedEffect(uiState.errorMessage) {
         uiState.errorMessage?.let {
@@ -110,7 +116,7 @@ fun AddExpenseScreen(
                 onExpandedChange = { categoryExpanded = it }
             ) {
                 OutlinedTextField(
-                    value = selectedCategory.displayName,
+                    value = selectedCategory?.name ?: "Select Category",
                     onValueChange = {},
                     readOnly = true,
                     label = { Text("Category") },
@@ -123,9 +129,9 @@ fun AddExpenseScreen(
                     expanded = categoryExpanded,
                     onDismissRequest = { categoryExpanded = false }
                 ) {
-                    Category.entries.forEach { category ->
+                    uiState.categories.forEach { category ->
                         DropdownMenuItem(
-                            text = { Text(category.displayName) },
+                            text = { Text(category.name) },
                             onClick = {
                                 selectedCategory = category
                                 categoryExpanded = false
@@ -166,11 +172,12 @@ fun AddExpenseScreen(
             Button(
                 onClick = {
                     val parsedAmount = amount.toDoubleOrNull()
-                    if (parsedAmount != null && parsedAmount > 0) {
+                    if (parsedAmount != null && parsedAmount > 0 && selectedCategory != null) {
                         onAddExpense(
                             Expense(
                                 amount = parsedAmount,
-                                category = selectedCategory,
+                                categoryId = selectedCategory!!.id,
+                                categoryName = selectedCategory!!.name,
                                 description = description,
                                 date = dateText
                             )
@@ -178,7 +185,7 @@ fun AddExpenseScreen(
                     }
                 },
                 modifier = Modifier.fillMaxWidth(),
-                enabled = !uiState.isSaving && amount.isNotBlank()
+                enabled = !uiState.isSaving && amount.isNotBlank() && selectedCategory != null
             ) {
                 if (uiState.isSaving) {
                     CircularProgressIndicator(
@@ -208,7 +215,13 @@ private fun filterDecimalInput(input: String): String {
 private fun AddExpenseScreenPreview() {
     MaterialTheme {
         AddExpenseScreen(
-            uiState = ExpenseUiState(),
+            uiState = ExpenseUiState(
+                categories = listOf(
+                    Category(name = "Food"),
+                    Category(name = "Bills"),
+                    Category(name = "Other")
+                )
+            ),
             onAddExpense = {},
             onBack = {},
             onSnackbarDismissed = {}
