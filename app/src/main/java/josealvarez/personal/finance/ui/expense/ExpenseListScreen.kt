@@ -154,7 +154,7 @@ private fun ExpenseItem(
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Text(
-                        text = expense.category.displayName,
+                        text = expense.categoryName,
                         fontWeight = FontWeight.Bold,
                         fontSize = 16.sp
                     )
@@ -202,14 +202,14 @@ private fun ExpenseListScreenPreview() {
                     Expense(
                         id = "1",
                         amount = 25.50,
-                        category = Category.FOOD,
+                        categoryName = "Food",
                         description = "Lunch",
                         date = "2026-03-01"
                     ),
                     Expense(
                         id = "2",
                         amount = 15.00,
-                        category = Category.TRANSPORT,
+                        categoryName = "Transport",
                         description = "Bus fare",
                         date = "2026-03-01"
                     )
