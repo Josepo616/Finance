@@ -6,7 +6,9 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -59,6 +61,9 @@ class DashboardActivity : ComponentActivity() {
                         },
                         onIncomeClick = {
                             startActivity(Intent(this@DashboardActivity, IncomeActivity::class.java))
+                        },
+                        onCategoriesClick = {
+                            startActivity(Intent(this@DashboardActivity, josealvarez.personal.finance.ui.category.CategoryActivity::class.java))
                         }
                     )
                 }
@@ -96,12 +101,14 @@ fun DashboardScreen(
     onLogoutClick: () -> Unit,
     onBudgetClick: () -> Unit,
     onExpensesClick: () -> Unit,
-    onIncomeClick: () -> Unit = {}
+    onIncomeClick: () -> Unit = {},
+    onCategoriesClick: () -> Unit = {}
 ) {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(16.dp),
+            .padding(16.dp)
+            .verticalScroll(rememberScrollState()),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Spacer(modifier = Modifier.height(32.dp))
@@ -242,7 +249,37 @@ fun DashboardScreen(
             }
         }
 
-        Spacer(modifier = Modifier.weight(1f))
+        Spacer(modifier = Modifier.height(8.dp))
+
+        ElevatedCard(
+            onClick = onCategoriesClick,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(8.dp),
+            shape = MaterialTheme.shapes.large
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(24.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = "Categories",
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        text = "Manage expense categories",
+                        fontSize = 14.sp,
+                        color = Color.Gray
+                    )
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(32.dp))
 
         TextButton(
             onClick = onLogoutClick,
