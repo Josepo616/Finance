@@ -19,17 +19,15 @@ import androidx.compose.ui.unit.sp
 import josealvarez.personal.finance.model.Income
 import josealvarez.personal.finance.model.IncomeCategory
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun IncomeListScreen(
     uiState: IncomeUiState,
     onAddClick: () -> Unit,
     onDeleteIncome: (Income) -> Unit,
     onBack: () -> Unit,
-    onSnackbarDismissed: () -> Unit
+    onSnackbarDismissed: () -> Unit,
+    snackbarHostState: SnackbarHostState
 ) {
-    val snackbarHostState = remember { SnackbarHostState() }
-
     LaunchedEffect(uiState.saveSuccess) {
         if (uiState.saveSuccess) {
             snackbarHostState.showSnackbar("Income added successfully")
@@ -44,54 +42,19 @@ fun IncomeListScreen(
         }
     }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Income") },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back"
-                        )
-                    }
-                }
-            )
-        },
-        floatingActionButton = {
-            FloatingActionButton(onClick = onAddClick) {
-                Icon(Icons.Default.Add, contentDescription = "Add Income")
-            }
-        },
-        snackbarHost = { SnackbarHost(hostState = snackbarHostState) }
-    ) { padding ->
+    Box(modifier = Modifier.fillMaxSize()) {
         if (uiState.isLoading) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(padding),
-                contentAlignment = Alignment.Center
-            ) {
-                CircularProgressIndicator()
-            }
+            CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
         } else if (uiState.incomeList.isEmpty()) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(padding),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = "No income this month",
-                    fontSize = 16.sp,
-                    color = Color.Gray
-                )
-            }
+            Text(
+                text = "No income this month",
+                fontSize = 16.sp,
+                color = Color.Gray,
+                modifier = Modifier.align(Alignment.Center)
+            )
         } else {
             LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(padding),
+                modifier = Modifier.fillMaxSize(),
                 contentPadding = PaddingValues(16.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
@@ -129,6 +92,15 @@ fun IncomeListScreen(
                     )
                 }
             }
+        }
+
+        FloatingActionButton(
+            onClick = onAddClick,
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .padding(16.dp)
+        ) {
+            Icon(Icons.Default.Add, contentDescription = "Add Income")
         }
     }
 }
@@ -218,7 +190,8 @@ private fun IncomeListScreenPreview() {
             onAddClick = {},
             onDeleteIncome = {},
             onBack = {},
-            onSnackbarDismissed = {}
+            onSnackbarDismissed = {},
+            snackbarHostState = remember { SnackbarHostState() }
         )
     }
 }

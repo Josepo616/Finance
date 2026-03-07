@@ -4,19 +4,14 @@ import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -25,6 +20,9 @@ import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.firebase.auth.FirebaseAuth
 import josealvarez.personal.finance.ui.budget.BudgetActivity
+import josealvarez.personal.finance.ui.category.CategoryActivity
+import josealvarez.personal.finance.ui.components.FinanceAppScaffold
+import josealvarez.personal.finance.ui.components.NavigationItem
 import josealvarez.personal.finance.ui.expense.ExpenseActivity
 import josealvarez.personal.finance.ui.income.IncomeActivity
 
@@ -45,27 +43,43 @@ class DashboardActivity : ComponentActivity() {
 
         setContent {
             MaterialTheme {
-                Surface(
-                    modifier = Modifier.fillMaxSize(),
-                    color = MaterialTheme.colorScheme.background
-                ) {
-                    DashboardScreen(
-                        userName = user.displayName ?: "No Name",
-                        userEmail = user.email ?: "No Email",
-                        onLogoutClick = { signOut() },
-                        onBudgetClick = {
-                            startActivity(Intent(this@DashboardActivity, BudgetActivity::class.java))
-                        },
-                        onExpensesClick = {
-                            startActivity(Intent(this@DashboardActivity, ExpenseActivity::class.java))
-                        },
-                        onIncomeClick = {
-                            startActivity(Intent(this@DashboardActivity, IncomeActivity::class.java))
-                        },
-                        onCategoriesClick = {
-                            startActivity(Intent(this@DashboardActivity, josealvarez.personal.finance.ui.category.CategoryActivity::class.java))
+                FinanceAppScaffold(
+                    title = "Dashboard",
+                    userName = user.displayName ?: "No Name",
+                    userEmail = user.email ?: "No Email",
+                    onLogoutClick = { signOut() },
+                    onNavigate = { item ->
+                        when (item) {
+                            NavigationItem.Dashboard -> { /* Already here */ }
+                            NavigationItem.Budget -> startActivity(Intent(this, BudgetActivity::class.java))
+                            NavigationItem.Expenses -> startActivity(Intent(this, ExpenseActivity::class.java))
+                            NavigationItem.Income -> startActivity(Intent(this, IncomeActivity::class.java))
+                            NavigationItem.Categories -> startActivity(Intent(this, CategoryActivity::class.java))
                         }
-                    )
+                    },
+                    selectedItem = NavigationItem.Dashboard
+                ) { padding ->
+                    Surface(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(padding),
+                        color = MaterialTheme.colorScheme.background
+                    ) {
+                        DashboardScreen(
+                            onBudgetClick = {
+                                startActivity(Intent(this@DashboardActivity, BudgetActivity::class.java))
+                            },
+                            onExpensesClick = {
+                                startActivity(Intent(this@DashboardActivity, ExpenseActivity::class.java))
+                            },
+                            onIncomeClick = {
+                                startActivity(Intent(this@DashboardActivity, IncomeActivity::class.java))
+                            },
+                            onCategoriesClick = {
+                                startActivity(Intent(this@DashboardActivity, CategoryActivity::class.java))
+                            }
+                        )
+                    }
                 }
             }
         }
@@ -96,9 +110,6 @@ class DashboardActivity : ComponentActivity() {
 
 @Composable
 fun DashboardScreen(
-    userName: String,
-    userEmail: String,
-    onLogoutClick: () -> Unit,
     onBudgetClick: () -> Unit,
     onExpensesClick: () -> Unit,
     onIncomeClick: () -> Unit = {},
@@ -111,53 +122,12 @@ fun DashboardScreen(
             .verticalScroll(rememberScrollState()),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Spacer(modifier = Modifier.height(32.dp))
-
         Text(
-            text = "Financial Dashboard",
+            text = "Welcome back!",
             fontSize = 24.sp,
-            fontWeight = FontWeight.Bold
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.padding(vertical = 16.dp)
         )
-
-        Spacer(modifier = Modifier.height(32.dp))
-
-        ElevatedCard(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(8.dp),
-            shape = MaterialTheme.shapes.large
-        ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(24.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
-            ) {
-                Image(
-                    painter = painterResource(id = R.drawable.ic_launcher_foreground),
-                    contentDescription = "Profile Image",
-                    modifier = Modifier
-                        .size(80.dp)
-                        .clip(CircleShape),
-                    contentScale = ContentScale.Crop
-                )
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                Text(
-                    text = userName,
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold
-                )
-
-                Text(
-                    text = userEmail,
-                    fontSize = 14.sp,
-                    color = Color.Gray
-                )
-            }
-        }
 
         Spacer(modifier = Modifier.height(16.dp))
 
@@ -278,16 +248,6 @@ fun DashboardScreen(
                 }
             }
         }
-
-        Spacer(modifier = Modifier.height(32.dp))
-
-        TextButton(
-            onClick = onLogoutClick,
-            colors = ButtonDefaults.textButtonColors(contentColor = Color.Red),
-            modifier = Modifier.padding(bottom = 32.dp)
-        ) {
-            Text(text = "Logout", fontSize = 16.sp)
-        }
     }
 }
 
@@ -300,9 +260,6 @@ fun DashboardScreenPreview() {
             color = MaterialTheme.colorScheme.background
         ) {
             DashboardScreen(
-                userName = "John Doe",
-                userEmail = "john.doe@example.com",
-                onLogoutClick = {},
                 onBudgetClick = {},
                 onExpensesClick = {}
             )
