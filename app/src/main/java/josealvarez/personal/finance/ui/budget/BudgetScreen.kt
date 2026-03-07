@@ -18,16 +18,14 @@ import josealvarez.personal.finance.model.Budget
 import java.text.SimpleDateFormat
 import java.util.*
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BudgetScreen(
     uiState: BudgetUiState,
     onSave: (Budget) -> Unit,
     onBack: () -> Unit,
-    onSnackbarDismissed: () -> Unit
+    onSnackbarDismissed: () -> Unit,
+    snackbarHostState: SnackbarHostState
 ) {
-    val snackbarHostState = remember { SnackbarHostState() }
-
     LaunchedEffect(uiState.saveSuccess) {
         if (uiState.saveSuccess) {
             snackbarHostState.showSnackbar("Budget saved successfully")
@@ -42,37 +40,14 @@ fun BudgetScreen(
         }
     }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Budget Limits") },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back"
-                        )
-                    }
-                }
-            )
-        },
-        snackbarHost = { SnackbarHost(hostState = snackbarHostState) }
-    ) { padding ->
+    Box(modifier = Modifier.fillMaxSize()) {
         if (uiState.isLoading) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(padding),
-                contentAlignment = Alignment.Center
-            ) {
-                CircularProgressIndicator()
-            }
+            CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
         } else {
             BudgetForm(
                 budget = uiState.budget,
                 isSaving = uiState.isSaving,
-                onSave = onSave,
-                modifier = Modifier.padding(padding)
+                onSave = onSave
             )
         }
     }
@@ -306,7 +281,8 @@ private fun BudgetScreenPreview() {
             ),
             onSave = {},
             onBack = {},
-            onSnackbarDismissed = {}
+            onSnackbarDismissed = {},
+            snackbarHostState = remember { SnackbarHostState() }
         )
     }
 }
