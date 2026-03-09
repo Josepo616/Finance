@@ -20,6 +20,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -58,9 +59,9 @@ class DashboardActivity : ComponentActivity() {
 
             MaterialTheme {
                 FinanceAppScaffold(
-                    title = "Dashboard",
-                    userName = user.displayName ?: "No Name",
-                    userEmail = user.email ?: "No Email",
+                    title = getString(R.string.dashboard_title),
+                    userName = user.displayName ?: getString(R.string.no_name),
+                    userEmail = user.email ?: getString(R.string.no_email),
                     onLogoutClick = { signOut() },
                     onNavigate = { item ->
                         when (item) {
@@ -139,7 +140,7 @@ fun DashboardScreen(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(
-            text = "Financial Status",
+            text = stringResource(R.string.financial_status),
             fontSize = 20.sp,
             fontWeight = FontWeight.Bold,
             modifier = Modifier
@@ -152,7 +153,7 @@ fun DashboardScreen(
         Spacer(modifier = Modifier.height(24.dp))
 
         Text(
-            text = "Quick Actions",
+            text = stringResource(R.string.quick_actions),
             fontSize = 18.sp,
             fontWeight = FontWeight.SemiBold,
             modifier = Modifier
@@ -165,13 +166,13 @@ fun DashboardScreen(
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             QuickActionCard(
-                title = "Add Expense",
+                title = stringResource(R.string.add_expense),
                 icon = Icons.Default.Add,
                 onClick = onExpensesClick,
                 modifier = Modifier.weight(1f)
             )
             QuickActionCard(
-                title = "Quick View",
+                title = stringResource(R.string.quick_view),
                 icon = Icons.Default.Visibility,
                 onClick = onBudgetClick,
                 modifier = Modifier.weight(1f)
@@ -200,11 +201,11 @@ fun WeeklyRemainingCard(budget: Budget) {
     val contentColor = if (isExceeded) Color.White else MaterialTheme.colorScheme.onPrimaryContainer
     
     val displayAmount = if (isExceeded) Math.abs(remaining) else remaining
-    val titleText = if (isExceeded) "Limit Exceeded" else "Weekly Remaining"
+    val titleText = if (isExceeded) stringResource(R.string.limit_exceeded) else stringResource(R.string.weekly_remaining)
     val subtitleText = if (isExceeded) {
-        "You exceeded by $${"%.2f".format(displayAmount)} from your $${"%.2f".format(original)} limit"
+        stringResource(R.string.exceeded_by_limit, displayAmount, original)
     } else {
-        "of $${"%.2f".format(original)} limit"
+        stringResource(R.string.of_limit, original)
     }
 
     ElevatedCard(
@@ -230,7 +231,7 @@ fun WeeklyRemainingCard(budget: Budget) {
             )
             Spacer(modifier = Modifier.height(8.dp))
             Text(
-                text = if (isExceeded) "$${"%.2f".format(displayAmount)}" else "$${"%.2f".format(displayAmount)}",
+                text = stringResource(R.string.amount_format, displayAmount),
                 fontSize = 36.sp,
                 fontWeight = FontWeight.Bold
             )
