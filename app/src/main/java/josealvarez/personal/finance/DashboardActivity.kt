@@ -4,14 +4,22 @@ import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.viewModels
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -19,6 +27,7 @@ import androidx.compose.ui.unit.sp
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.firebase.auth.FirebaseAuth
+import josealvarez.personal.finance.model.Budget
 import josealvarez.personal.finance.ui.budget.BudgetActivity
 import josealvarez.personal.finance.ui.category.CategoryActivity
 import josealvarez.personal.finance.ui.components.FinanceAppScaffold
@@ -29,6 +38,9 @@ import josealvarez.personal.finance.ui.income.IncomeActivity
 class DashboardActivity : ComponentActivity() {
 
     private lateinit var auth: FirebaseAuth
+    private val viewModel: DashboardViewModel by viewModels {
+        DashboardViewModelFactory(FirebaseAuth.getInstance().currentUser?.uid ?: "")
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -42,6 +54,8 @@ class DashboardActivity : ComponentActivity() {
         }
 
         setContent {
+            val uiState by viewModel.uiState.collectAsState()
+
             MaterialTheme {
                 FinanceAppScaffold(
                     title = "Dashboard",
@@ -66,22 +80,25 @@ class DashboardActivity : ComponentActivity() {
                         color = MaterialTheme.colorScheme.background
                     ) {
                         DashboardScreen(
+                            uiState = uiState,
                             onBudgetClick = {
                                 startActivity(Intent(this@DashboardActivity, BudgetActivity::class.java))
                             },
                             onExpensesClick = {
                                 startActivity(Intent(this@DashboardActivity, ExpenseActivity::class.java))
-                            },
-                            onIncomeClick = {
-                                startActivity(Intent(this@DashboardActivity, IncomeActivity::class.java))
-                            },
-                            onCategoriesClick = {
-                                startActivity(Intent(this@DashboardActivity, CategoryActivity::class.java))
                             }
                         )
                     }
                 }
             }
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        // Refresh data when returning to dashboard
+        if (auth.currentUser != null) {
+            viewModel.loadDashboardData()
         }
     }
 
@@ -110,10 +127,9 @@ class DashboardActivity : ComponentActivity() {
 
 @Composable
 fun DashboardScreen(
+    uiState: DashboardUiState,
     onBudgetClick: () -> Unit,
-    onExpensesClick: () -> Unit,
-    onIncomeClick: () -> Unit = {},
-    onCategoriesClick: () -> Unit = {}
+    onExpensesClick: () -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -123,130 +139,140 @@ fun DashboardScreen(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(
-            text = "Welcome back!",
-            fontSize = 24.sp,
+            text = "Financial Status",
+            fontSize = 20.sp,
             fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(vertical = 16.dp)
+            modifier = Modifier
+                .align(Alignment.Start)
+                .padding(bottom = 16.dp)
         )
 
-        Spacer(modifier = Modifier.height(16.dp))
+        WeeklyRemainingCard(budget = uiState.budget)
 
-        ElevatedCard(
-            onClick = onBudgetClick,
+        Spacer(modifier = Modifier.height(24.dp))
+
+        Text(
+            text = "Quick Actions",
+            fontSize = 18.sp,
+            fontWeight = FontWeight.SemiBold,
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(8.dp),
-            shape = MaterialTheme.shapes.large
+                .align(Alignment.Start)
+                .padding(bottom = 12.dp)
+        )
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(24.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = "Budget Limits",
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Text(
-                        text = "Manage your spending limits",
-                        fontSize = 14.sp,
-                        color = Color.Gray
-                    )
-                }
-            }
+            QuickActionCard(
+                title = "Add Expense",
+                icon = Icons.Default.Add,
+                onClick = onExpensesClick,
+                modifier = Modifier.weight(1f)
+            )
+            QuickActionCard(
+                title = "Quick View",
+                icon = Icons.Default.Visibility,
+                onClick = onBudgetClick,
+                modifier = Modifier.weight(1f)
+            )
         }
 
-        Spacer(modifier = Modifier.height(8.dp))
-
-        ElevatedCard(
-            onClick = onExpensesClick,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(8.dp),
-            shape = MaterialTheme.shapes.large
-        ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(24.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = "Expenses",
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Text(
-                        text = "Track your spending",
-                        fontSize = 14.sp,
-                        color = Color.Gray
-                    )
-                }
-            }
+        if (uiState.isLoading) {
+            Spacer(modifier = Modifier.height(32.dp))
+            CircularProgressIndicator()
         }
 
-        Spacer(modifier = Modifier.height(8.dp))
-
-        ElevatedCard(
-            onClick = onIncomeClick,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(8.dp),
-            shape = MaterialTheme.shapes.large
-        ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(24.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = "Income",
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Text(
-                        text = "Track your earnings",
-                        fontSize = 14.sp,
-                        color = Color.Gray
-                    )
-                }
-            }
+        uiState.errorMessage?.let { error ->
+            Spacer(modifier = Modifier.height(16.dp))
+            Text(text = error, color = MaterialTheme.colorScheme.error)
         }
+    }
+}
 
-        Spacer(modifier = Modifier.height(8.dp))
+@Composable
+fun WeeklyRemainingCard(budget: Budget) {
+    val remaining = budget.currentWeeklyLimit
+    val original = budget.originalWeeklyLimit
+    val isExceeded = remaining < 0
+    
+    val backgroundColor = if (isExceeded) Color.DarkGray else MaterialTheme.colorScheme.primaryContainer
+    val contentColor = if (isExceeded) Color.White else MaterialTheme.colorScheme.onPrimaryContainer
+    
+    val displayAmount = if (isExceeded) Math.abs(remaining) else remaining
+    val titleText = if (isExceeded) "Limit Exceeded" else "Weekly Remaining"
+    val subtitleText = if (isExceeded) {
+        "You exceeded by $${"%.2f".format(displayAmount)} from your $${"%.2f".format(original)} limit"
+    } else {
+        "of $${"%.2f".format(original)} limit"
+    }
 
-        ElevatedCard(
-            onClick = onCategoriesClick,
+    ElevatedCard(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 8.dp),
+        colors = CardDefaults.elevatedCardColors(
+            containerColor = backgroundColor,
+            contentColor = contentColor
+        ),
+        shape = MaterialTheme.shapes.large
+    ) {
+        Column(
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(8.dp),
-            shape = MaterialTheme.shapes.large
+                .padding(24.dp)
+                .fillMaxWidth(),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(24.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = "Categories",
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Text(
-                        text = "Manage expense categories",
-                        fontSize = 14.sp,
-                        color = Color.Gray
-                    )
-                }
-            }
+            Text(
+                text = titleText,
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Medium
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = if (isExceeded) "$${"%.2f".format(displayAmount)}" else "$${"%.2f".format(displayAmount)}",
+                fontSize = 36.sp,
+                fontWeight = FontWeight.Bold
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = subtitleText,
+                fontSize = 14.sp,
+                modifier = Modifier.graphicsLayer { alpha = 0.8f }
+            )
+        }
+    }
+}
+
+@Composable
+fun QuickActionCard(
+    title: String,
+    icon: ImageVector,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    ElevatedCard(
+        onClick = onClick,
+        modifier = modifier.height(100.dp),
+        shape = MaterialTheme.shapes.medium
+    ) {
+        Column(
+            modifier = Modifier.fillMaxSize(),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = title,
+                modifier = Modifier.size(32.dp),
+                tint = MaterialTheme.colorScheme.primary
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = title,
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Medium
+            )
         }
     }
 }
@@ -260,6 +286,12 @@ fun DashboardScreenPreview() {
             color = MaterialTheme.colorScheme.background
         ) {
             DashboardScreen(
+                uiState = DashboardUiState(
+                    budget = Budget(
+                        originalWeeklyLimit = 500.0,
+                        currentWeeklyLimit = 400.0
+                    )
+                ),
                 onBudgetClick = {},
                 onExpensesClick = {}
             )
