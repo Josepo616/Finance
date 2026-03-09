@@ -40,7 +40,7 @@ fun AddExpenseScreen(
 
     LaunchedEffect(uiState.categories) {
         if (selectedCategory == null && uiState.categories.isNotEmpty()) {
-            selectedCategory = uiState.categories.find { it.name == "Other" } ?: uiState.categories.first()
+            selectedCategory = uiState.categories.find { it.name == "Other" } ?: uiState.categories.firstOrNull()
         }
     }
 
@@ -206,7 +206,8 @@ private fun filterDecimalInput(input: String): String {
     val parts = filtered.split(".")
     return when {
         parts.size <= 1 -> filtered
-        else -> parts[0] + "." + parts[1].take(2)
+        parts.size >= 2 -> parts[0] + "." + parts[1].take(2)
+        else -> filtered
     }
 }
 
