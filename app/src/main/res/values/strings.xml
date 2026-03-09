@@ -1,3 +1,17 @@
 <resources>
     <string name="app_name">Finance</string>
+    <string name="dashboard_title">Dashboard</string>
+    <string name="no_name">No Name</string>
+    <string name="no_email">No Email</string>
+    <string name="financial_status">Financial Status</string>
+    <string name="quick_actions">Quick Actions</string>
+    <string name="add_expense">Add Expense</string>
+    <string name="quick_view">Quick View</string>
+    <string name="limit_exceeded">Limit Exceeded</string>
+    <string name="weekly_remaining">Weekly Remaining</string>
+    <string name="exceeded_by_limit">You exceeded by $%1$.2f from your $%2$.2f limit</string>
+    <string name="of_limit">of $%1$.2f limit</string>
+    <string name="amount_format">$%1$.2f</string>
+    <string name="error_failed_to_load_dashboard">Failed to load dashboard data</string>
+    <string name="error_unknown_viewmodel">Unknown ViewModel class</string>
 </resources>
