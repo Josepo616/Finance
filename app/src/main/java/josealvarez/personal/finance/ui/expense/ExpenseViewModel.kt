@@ -23,7 +23,10 @@ data class ExpenseUiState(
     val isSaving: Boolean = false,
     val errorMessage: String? = null,
     val saveSuccess: Boolean = false,
-    val showAddScreen: Boolean = false
+    val showAddScreen: Boolean = false,
+    val selectedMonth: Int = Calendar.getInstance().get(Calendar.MONTH) + 1,
+    val selectedYear: Int = Calendar.getInstance().get(Calendar.YEAR),
+    val isCurrentMonth: Boolean = true
 )
 
 class ExpenseViewModel(
@@ -44,11 +47,10 @@ class ExpenseViewModel(
 
     fun loadExpenses() {
         viewModelScope.launch {
+            val year = _uiState.value.selectedYear
+            val month = _uiState.value.selectedMonth
             _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null)
             try {
-                val calendar = Calendar.getInstance()
-                val year = calendar.get(Calendar.YEAR)
-                val month = calendar.get(Calendar.MONTH) + 1
                 val expenses = expenseRepository.getMonthlyExpenses(uid, year, month)
                 _uiState.value = _uiState.value.copy(expenses = expenses, isLoading = false)
             } catch (e: Exception) {
@@ -58,6 +60,27 @@ class ExpenseViewModel(
                 )
             }
         }
+    }
+
+    fun navigateMonth(delta: Int) {
+        val calendar = Calendar.getInstance().apply {
+            set(Calendar.YEAR, _uiState.value.selectedYear)
+            set(Calendar.MONTH, _uiState.value.selectedMonth - 1)
+            add(Calendar.MONTH, delta)
+        }
+
+        val newYear = calendar.get(Calendar.YEAR)
+        val newMonth = calendar.get(Calendar.MONTH) + 1
+
+        val now = Calendar.getInstance()
+        val isCurrentMonth = newYear == now.get(Calendar.YEAR) && newMonth == (now.get(Calendar.MONTH) + 1)
+
+        _uiState.value = _uiState.value.copy(
+            selectedYear = newYear,
+            selectedMonth = newMonth,
+            isCurrentMonth = isCurrentMonth
+        )
+        loadExpenses()
     }
 
     fun loadCategories() {

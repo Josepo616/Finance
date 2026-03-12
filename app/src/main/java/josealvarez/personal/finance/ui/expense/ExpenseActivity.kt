@@ -99,6 +99,7 @@ class ExpenseActivity : ComponentActivity() {
                                 uiState = uiState,
                                 onAddClick = { viewModel.showAddForm() },
                                 onDeleteExpense = { expense -> viewModel.deleteExpense(expense) },
+                                onNavigateMonth = { delta -> viewModel.navigateMonth(delta) },
                                 onBack = { finish() },
                                 onSnackbarDismissed = { viewModel.clearSnackbar() },
                                 snackbarHostState = snackbarHostState
