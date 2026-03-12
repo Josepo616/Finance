@@ -99,6 +99,7 @@ class IncomeActivity : ComponentActivity() {
                                 uiState = uiState,
                                 onAddClick = { viewModel.showAddForm() },
                                 onDeleteIncome = { income -> viewModel.deleteIncome(income) },
+                                onNavigateMonth = { delta -> viewModel.navigateMonth(delta) },
                                 onBack = { finish() },
                                 onSnackbarDismissed = { viewModel.clearSnackbar() },
                                 snackbarHostState = snackbarHostState

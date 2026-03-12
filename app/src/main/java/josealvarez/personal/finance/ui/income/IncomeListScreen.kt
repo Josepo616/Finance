@@ -19,11 +19,14 @@ import androidx.compose.ui.unit.sp
 import josealvarez.personal.finance.model.Income
 import josealvarez.personal.finance.model.IncomeCategory
 
+import josealvarez.personal.finance.ui.common.MonthSelector
+
 @Composable
 fun IncomeListScreen(
     uiState: IncomeUiState,
     onAddClick: () -> Unit,
     onDeleteIncome: (Income) -> Unit,
+    onNavigateMonth: (Int) -> Unit,
     onBack: () -> Unit,
     onSnackbarDismissed: () -> Unit,
     snackbarHostState: SnackbarHostState
@@ -43,53 +46,65 @@ fun IncomeListScreen(
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
-        if (uiState.isLoading) {
-            CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
-        } else if (uiState.incomeList.isEmpty()) {
-            Text(
-                text = "No income this month",
-                fontSize = 16.sp,
-                color = Color.Gray,
-                modifier = Modifier.align(Alignment.Center)
+        Column(modifier = Modifier.fillMaxSize()) {
+            MonthSelector(
+                month = uiState.selectedMonth,
+                year = uiState.selectedYear,
+                onPrevious = { onNavigateMonth(-1) },
+                onNext = { onNavigateMonth(1) },
+                isNextEnabled = !uiState.isCurrentMonth
             )
-        } else {
-            LazyColumn(
-                modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(16.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                item {
-                    val monthlyTotal = uiState.incomeList.sumOf { it.amount }
-                    ElevatedCard(
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = MaterialTheme.shapes.large
+
+            Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
+                if (uiState.isLoading) {
+                    CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+                } else if (uiState.incomeList.isEmpty()) {
+                    Text(
+                        text = "No income this month",
+                        fontSize = 16.sp,
+                        color = Color.Gray,
+                        modifier = Modifier.align(Alignment.Center)
+                    )
+                } else {
+                    LazyColumn(
+                        modifier = Modifier.fillMaxSize(),
+                        contentPadding = PaddingValues(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(16.dp),
-                            horizontalAlignment = Alignment.CenterHorizontally
-                        ) {
-                            Text(
-                                text = "Monthly Total",
-                                fontSize = 14.sp,
-                                color = Color.Gray
-                            )
-                            Text(
-                                text = "$%.2f".format(monthlyTotal),
-                                fontSize = 24.sp,
-                                fontWeight = FontWeight.Bold
+                        item {
+                            val monthlyTotal = uiState.incomeList.sumOf { it.amount }
+                            ElevatedCard(
+                                modifier = Modifier.fillMaxWidth(),
+                                shape = MaterialTheme.shapes.large
+                            ) {
+                                Column(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(16.dp),
+                                    horizontalAlignment = Alignment.CenterHorizontally
+                                ) {
+                                    Text(
+                                        text = "Monthly Total",
+                                        fontSize = 14.sp,
+                                        color = Color.Gray
+                                    )
+                                    Text(
+                                        text = "$%.2f".format(monthlyTotal),
+                                        fontSize = 24.sp,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
+                            }
+                            Spacer(modifier = Modifier.height(8.dp))
+                        }
+
+                        items(uiState.incomeList) { income ->
+                            IncomeItem(
+                                income = income,
+                                onDelete = { onDeleteIncome(income) }
                             )
                         }
                     }
-                    Spacer(modifier = Modifier.height(8.dp))
-                }
-
-                items(uiState.incomeList) { income ->
-                    IncomeItem(
-                        income = income,
-                        onDelete = { onDeleteIncome(income) }
-                    )
                 }
             }
         }
@@ -189,6 +204,7 @@ private fun IncomeListScreenPreview() {
             ),
             onAddClick = {},
             onDeleteIncome = {},
+            onNavigateMonth = {},
             onBack = {},
             onSnackbarDismissed = {},
             snackbarHostState = remember { SnackbarHostState() }
