@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import josealvarez.personal.finance.data.repository.AuditRepository
 import josealvarez.personal.finance.data.repository.BudgetRepository
+import josealvarez.personal.finance.data.repository.CategoryRepository
 import josealvarez.personal.finance.data.repository.ExpenseRepository
 import josealvarez.personal.finance.model.AuditLog
 import josealvarez.personal.finance.model.Budget
@@ -27,7 +28,8 @@ class BudgetViewModel(
     private val uid: String,
     private val repository: BudgetRepository = BudgetRepository(),
     private val expenseRepository: ExpenseRepository = ExpenseRepository(),
-    private val auditRepository: AuditRepository = AuditRepository()
+    private val auditRepository: AuditRepository = AuditRepository(),
+    private val categoryRepository: CategoryRepository = CategoryRepository()
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(BudgetUiState())
@@ -95,7 +97,11 @@ class BudgetViewModel(
                         budget.currentWeekStartDate, 
                         budget.currentWeekEndDate
                     )
-                    val totalSpent = expenses.sumOf { it.amount }
+                    
+                    val categories = categoryRepository.getCategories(uid)
+                    val exemptCategoryIds = categories.filter { it.excludeFromWeeklyLimit }.map { it.id }.toSet()
+                    
+                    val totalSpent = expenses.filter { it.categoryId !in exemptCategoryIds }.sumOf { it.amount }
                     budget.copy(currentWeeklyLimit = budget.originalWeeklyLimit - totalSpent)
                 } else {
                     budget
