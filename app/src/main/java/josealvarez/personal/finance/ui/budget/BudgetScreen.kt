@@ -102,6 +102,13 @@ private fun BudgetForm(
             onValueChange = { dailyLimit = filterDecimalInput(it) }
         )
 
+        MoneyTextField(
+            label = "Daily Remaining",
+            value = budget.currentDailyLimit.toFieldText(),
+            onValueChange = {},
+            readOnly = true
+        )
+
         Row(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -144,6 +151,13 @@ private fun BudgetForm(
             label = "Monthly Limit",
             value = monthlyLimit,
             onValueChange = { monthlyLimit = filterDecimalInput(it) }
+        )
+
+        MoneyTextField(
+            label = "Monthly Remaining",
+            value = budget.currentMonthlyLimit.toFieldText(),
+            onValueChange = {},
+            readOnly = true
         )
 
         Spacer(modifier = Modifier.height(8.dp))
