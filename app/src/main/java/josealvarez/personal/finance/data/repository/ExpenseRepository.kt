@@ -13,7 +13,7 @@ class ExpenseRepository {
         val docRef = db.collection("users").document(uid)
             .collection("expenses")
             .document()
-        docRef.set(expense.toMap())
+        docRef.set(expense.toMap()).await()
         return docRef.id
     }
 

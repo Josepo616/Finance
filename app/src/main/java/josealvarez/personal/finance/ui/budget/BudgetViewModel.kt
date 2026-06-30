@@ -9,6 +9,7 @@ import josealvarez.personal.finance.data.repository.CategoryRepository
 import josealvarez.personal.finance.data.repository.ExpenseRepository
 import josealvarez.personal.finance.model.AuditLog
 import josealvarez.personal.finance.model.Budget
+import josealvarez.personal.finance.model.BudgetAllocation
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -101,7 +102,9 @@ class BudgetViewModel(
                     val categories = categoryRepository.getCategories(uid)
                     val exemptCategoryIds = categories.filter { it.excludeFromWeeklyLimit }.map { it.id }.toSet()
                     
-                    val totalSpent = expenses.filter { it.categoryId !in exemptCategoryIds }.sumOf { it.amount }
+                    val totalSpent = expenses.filter { 
+                        it.budgetAllocation == BudgetAllocation.WEEKLY && it.categoryId !in exemptCategoryIds 
+                    }.sumOf { it.amount }
                     budget.copy(currentWeeklyLimit = budget.originalWeeklyLimit - totalSpent)
                 } else {
                     budget
