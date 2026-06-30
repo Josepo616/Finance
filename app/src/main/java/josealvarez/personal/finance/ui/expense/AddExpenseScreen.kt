@@ -41,16 +41,6 @@ fun AddExpenseScreen(
     var categoryExpanded by remember { mutableStateOf(false) }
     var budgetExpanded by remember { mutableStateOf(false) }
 
-    LaunchedEffect(selectedCategory) {
-        selectedCategory?.let { category ->
-            budgetAllocation = if (category.name.equals("Bills", ignoreCase = true)) {
-                BudgetAllocation.NONE
-            } else {
-                BudgetAllocation.WEEKLY
-            }
-        }
-    }
-
     LaunchedEffect(uiState.categories) {
         if (selectedCategory == null && uiState.categories.isNotEmpty()) {
             selectedCategory = uiState.categories.find { it.name == "Other" } ?: uiState.categories.firstOrNull()
@@ -222,9 +212,9 @@ fun AddExpenseScreen(
 
                 Text(
                     text = when (budgetAllocation) {
-                        BudgetAllocation.DAILY -> "Affects Daily limit and Global Funds."
-                        BudgetAllocation.WEEKLY -> "Affects Weekly limit and Global Funds."
-                        BudgetAllocation.MONTHLY -> "Affects Monthly limit and Global Funds."
+                        BudgetAllocation.DAILY -> "Affects Daily, Weekly, Monthly limits & Global Funds."
+                        BudgetAllocation.WEEKLY -> "Affects Weekly & Monthly limits & Global Funds."
+                        BudgetAllocation.MONTHLY -> "Affects Monthly limit & Global Funds."
                         BudgetAllocation.NONE -> "Only affects Global Funds."
                     },
                     style = MaterialTheme.typography.bodySmall,
