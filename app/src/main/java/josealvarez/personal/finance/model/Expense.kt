@@ -38,12 +38,7 @@ data class Expense(
                     BudgetAllocation.WEEKLY
                 }
             } else {
-                val categoryName = map["categoryName"] as? String ?: map["category"] as? String ?: "Other"
-                if (categoryName.equals("Bills", ignoreCase = true)) {
-                    BudgetAllocation.NONE
-                } else {
-                    BudgetAllocation.WEEKLY
-                }
+                BudgetAllocation.WEEKLY
             }
 
             return Expense(
