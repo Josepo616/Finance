@@ -161,15 +161,20 @@ class ExpenseViewModel(
                     null
                 }
 
-                val exclude = category?.excludeFromWeeklyLimit ?: false || expense.budgetAllocation != BudgetAllocation.WEEKLY
+                val exclude = category?.excludeFromWeeklyLimit ?: false || 
+                              (expense.budgetAllocation != BudgetAllocation.WEEKLY && expense.budgetAllocation != BudgetAllocation.DAILY)
                 
-                val updatedBudget = if (exclude) {
-                    budget.copy(availableFunds = budget.availableFunds - expense.amount)
-                } else {
-                    budget.copy(
-                        availableFunds = budget.availableFunds - expense.amount,
-                        currentWeeklyLimit = budget.currentWeeklyLimit - expense.amount
-                    )
+                var updatedBudget = budget.copy(availableFunds = budget.availableFunds - expense.amount)
+                if (!exclude) {
+                    updatedBudget = updatedBudget.copy(currentWeeklyLimit = updatedBudget.currentWeeklyLimit - expense.amount)
+                }
+                if (expense.budgetAllocation == BudgetAllocation.DAILY) {
+                    updatedBudget = updatedBudget.copy(currentDailyLimit = updatedBudget.currentDailyLimit - expense.amount)
+                }
+                if (expense.budgetAllocation == BudgetAllocation.DAILY ||
+                    expense.budgetAllocation == BudgetAllocation.WEEKLY ||
+                    expense.budgetAllocation == BudgetAllocation.MONTHLY) {
+                    updatedBudget = updatedBudget.copy(currentMonthlyLimit = updatedBudget.currentMonthlyLimit - expense.amount)
                 }
                 budgetRepository.saveBudget(uid, updatedBudget)
 
@@ -217,15 +222,20 @@ class ExpenseViewModel(
                     null
                 }
                 
-                val exclude = category?.excludeFromWeeklyLimit ?: false || expense.budgetAllocation != BudgetAllocation.WEEKLY
+                val exclude = category?.excludeFromWeeklyLimit ?: false || 
+                              (expense.budgetAllocation != BudgetAllocation.WEEKLY && expense.budgetAllocation != BudgetAllocation.DAILY)
 
-                val updatedBudget = if (exclude) {
-                    budget.copy(availableFunds = budget.availableFunds + expense.amount)
-                } else {
-                    budget.copy(
-                        availableFunds = budget.availableFunds + expense.amount,
-                        currentWeeklyLimit = budget.currentWeeklyLimit + expense.amount
-                    )
+                var updatedBudget = budget.copy(availableFunds = budget.availableFunds + expense.amount)
+                if (!exclude) {
+                    updatedBudget = updatedBudget.copy(currentWeeklyLimit = updatedBudget.currentWeeklyLimit + expense.amount)
+                }
+                if (expense.budgetAllocation == BudgetAllocation.DAILY) {
+                    updatedBudget = updatedBudget.copy(currentDailyLimit = updatedBudget.currentDailyLimit + expense.amount)
+                }
+                if (expense.budgetAllocation == BudgetAllocation.DAILY ||
+                    expense.budgetAllocation == BudgetAllocation.WEEKLY ||
+                    expense.budgetAllocation == BudgetAllocation.MONTHLY) {
+                    updatedBudget = updatedBudget.copy(currentMonthlyLimit = updatedBudget.currentMonthlyLimit + expense.amount)
                 }
                 budgetRepository.saveBudget(uid, updatedBudget)
 
