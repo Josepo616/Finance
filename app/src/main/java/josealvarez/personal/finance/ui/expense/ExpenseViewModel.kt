@@ -14,7 +14,13 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import java.text.SimpleDateFormat
 import java.util.Calendar
+import java.util.Locale
+
+enum class ExpenseViewMode {
+    MONTHLY, DAILY, RANGE
+}
 
 data class ExpenseUiState(
     val expenses: List<Expense> = emptyList(),
@@ -26,7 +32,13 @@ data class ExpenseUiState(
     val showAddScreen: Boolean = false,
     val selectedMonth: Int = Calendar.getInstance().get(Calendar.MONTH) + 1,
     val selectedYear: Int = Calendar.getInstance().get(Calendar.YEAR),
-    val isCurrentMonth: Boolean = true
+    val selectedDay: Int = Calendar.getInstance().get(Calendar.DAY_OF_MONTH),
+    val startDate: String = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Calendar.getInstance().time),
+    val endDate: String = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Calendar.getInstance().time),
+    val viewMode: ExpenseViewMode = ExpenseViewMode.MONTHLY,
+    val isCurrentMonth: Boolean = true,
+    val isCurrentDay: Boolean = true,
+    val excludeExemptFromTotal: Boolean = false
 )
 
 class ExpenseViewModel(
@@ -49,9 +61,23 @@ class ExpenseViewModel(
         viewModelScope.launch {
             val year = _uiState.value.selectedYear
             val month = _uiState.value.selectedMonth
+            val day = _uiState.value.selectedDay
+            val mode = _uiState.value.viewMode
+
             _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null)
             try {
-                val expenses = expenseRepository.getMonthlyExpenses(uid, year, month)
+                val expenses = when (mode) {
+                    ExpenseViewMode.MONTHLY -> {
+                        expenseRepository.getMonthlyExpenses(uid, year, month)
+                    }
+                    ExpenseViewMode.DAILY -> {
+                        val dateStr = "%04d-%02d-%02d".format(year, month, day)
+                        expenseRepository.getExpensesInRange(uid, dateStr, dateStr)
+                    }
+                    ExpenseViewMode.RANGE -> {
+                        expenseRepository.getExpensesInRange(uid, _uiState.value.startDate, _uiState.value.endDate)
+                    }
+                }
                 _uiState.value = _uiState.value.copy(expenses = expenses, isLoading = false)
             } catch (e: Exception) {
                 _uiState.value = _uiState.value.copy(
@@ -62,26 +88,51 @@ class ExpenseViewModel(
         }
     }
 
-    fun navigateMonth(delta: Int) {
+    fun setViewMode(mode: ExpenseViewMode) {
+        _uiState.value = _uiState.value.copy(viewMode = mode)
+        loadExpenses()
+    }
+
+    fun setDateRange(start: String, end: String) {
+        _uiState.value = _uiState.value.copy(startDate = start, endDate = end)
+        loadExpenses()
+    }
+
+    fun toggleExcludeExempt() {
+        _uiState.value = _uiState.value.copy(excludeExemptFromTotal = !_uiState.value.excludeExemptFromTotal)
+    }
+
+    fun navigateDate(delta: Int) {
         val calendar = Calendar.getInstance().apply {
             set(Calendar.YEAR, _uiState.value.selectedYear)
             set(Calendar.MONTH, _uiState.value.selectedMonth - 1)
-            add(Calendar.MONTH, delta)
+            set(Calendar.DAY_OF_MONTH, _uiState.value.selectedDay)
+            if (_uiState.value.viewMode == ExpenseViewMode.MONTHLY) {
+                add(Calendar.MONTH, delta)
+            } else if (_uiState.value.viewMode == ExpenseViewMode.DAILY) {
+                add(Calendar.DAY_OF_MONTH, delta)
+            }
         }
 
         val newYear = calendar.get(Calendar.YEAR)
         val newMonth = calendar.get(Calendar.MONTH) + 1
+        val newDay = calendar.get(Calendar.DAY_OF_MONTH)
 
         val now = Calendar.getInstance()
         val isCurrentMonth = newYear == now.get(Calendar.YEAR) && newMonth == (now.get(Calendar.MONTH) + 1)
+        val isCurrentDay = isCurrentMonth && newDay == now.get(Calendar.DAY_OF_MONTH)
 
         _uiState.value = _uiState.value.copy(
             selectedYear = newYear,
             selectedMonth = newMonth,
-            isCurrentMonth = isCurrentMonth
+            selectedDay = newDay,
+            isCurrentMonth = isCurrentMonth,
+            isCurrentDay = isCurrentDay
         )
         loadExpenses()
     }
+
+    fun navigateMonth(delta: Int) = navigateDate(delta)
 
     fun loadCategories() {
         viewModelScope.launch {

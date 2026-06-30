@@ -23,6 +23,7 @@ import josealvarez.personal.finance.ui.category.CategoryActivity
 import josealvarez.personal.finance.ui.components.FinanceAppScaffold
 import josealvarez.personal.finance.ui.components.NavigationItem
 import josealvarez.personal.finance.ui.income.IncomeActivity
+import josealvarez.personal.finance.ui.reports.ReportsActivity
 
 class ExpenseActivity : ComponentActivity() {
 
@@ -86,6 +87,10 @@ class ExpenseActivity : ComponentActivity() {
                                     startActivity(Intent(this, CategoryActivity::class.java))
                                     finish()
                                 }
+                                NavigationItem.Reports -> {
+                                    startActivity(Intent(this, ReportsActivity::class.java))
+                                    finish()
+                                }
                             }
                         },
                         selectedItem = NavigationItem.Expenses,
@@ -99,7 +104,10 @@ class ExpenseActivity : ComponentActivity() {
                                 uiState = uiState,
                                 onAddClick = { viewModel.showAddForm() },
                                 onDeleteExpense = { expense -> viewModel.deleteExpense(expense) },
-                                onNavigateMonth = { delta -> viewModel.navigateMonth(delta) },
+                                onNavigateDate = { delta -> viewModel.navigateDate(delta) },
+                                onViewModeChange = { mode -> viewModel.setViewMode(mode) },
+                                onDateRangeChange = { start, end -> viewModel.setDateRange(start, end) },
+                                onToggleExcludeExempt = { viewModel.toggleExcludeExempt() },
                                 onBack = { finish() },
                                 onSnackbarDismissed = { viewModel.clearSnackbar() },
                                 snackbarHostState = snackbarHostState
