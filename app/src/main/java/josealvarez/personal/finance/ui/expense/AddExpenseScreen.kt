@@ -162,6 +162,77 @@ fun AddExpenseScreen(
                 modifier = Modifier.fillMaxWidth()
             )
 
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                ExposedDropdownMenuBox(
+                    expanded = budgetExpanded,
+                    onExpandedChange = { budgetExpanded = it }
+                ) {
+                    OutlinedTextField(
+                        value = when (budgetAllocation) {
+                            BudgetAllocation.DAILY -> "Daily"
+                            BudgetAllocation.WEEKLY -> "Weekly"
+                            BudgetAllocation.MONTHLY -> "Monthly"
+                            BudgetAllocation.NONE -> "None"
+                        },
+                        onValueChange = {},
+                        readOnly = true,
+                        label = { Text("Which budget should this affect?") },
+                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = budgetExpanded) },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .menuAnchor()
+                    )
+                    ExposedDropdownMenu(
+                        expanded = budgetExpanded,
+                        onDismissRequest = { budgetExpanded = false }
+                    ) {
+                        DropdownMenuItem(
+                            text = { Text("Daily") },
+                            onClick = {
+                                budgetAllocation = BudgetAllocation.DAILY
+                                budgetExpanded = false
+                            }
+                        )
+                        DropdownMenuItem(
+                            text = { Text("Weekly") },
+                            onClick = {
+                                budgetAllocation = BudgetAllocation.WEEKLY
+                                budgetExpanded = false
+                            }
+                        )
+                        DropdownMenuItem(
+                            text = { Text("Monthly") },
+                            onClick = {
+                                budgetAllocation = BudgetAllocation.MONTHLY
+                                budgetExpanded = false
+                            }
+                        )
+                        DropdownMenuItem(
+                            text = { Text("None") },
+                            onClick = {
+                                budgetAllocation = BudgetAllocation.NONE
+                                budgetExpanded = false
+                            }
+                        )
+                    }
+                }
+
+                Text(
+                    text = when (budgetAllocation) {
+                        BudgetAllocation.DAILY -> "Affects Daily limit and Global Funds."
+                        BudgetAllocation.WEEKLY -> "Affects Weekly limit and Global Funds."
+                        BudgetAllocation.MONTHLY -> "Affects Monthly limit and Global Funds."
+                        BudgetAllocation.NONE -> "Only affects Global Funds."
+                    },
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(start = 4.dp)
+                )
+            }
+
             OutlinedTextField(
                 value = dateText,
                 onValueChange = {},
@@ -187,14 +258,15 @@ fun AddExpenseScreen(
                     val parsedAmount = amount.toDoubleOrNull()
                     if (parsedAmount != null && parsedAmount > 0 && selectedCategory != null) {
                         onAddExpense(
-                            Expense(
-                                amount = parsedAmount,
-                                categoryId = selectedCategory!!.id,
-                                categoryName = selectedCategory!!.name,
-                                description = description,
-                                date = dateText
+                                Expense(
+                                    amount = parsedAmount,
+                                    categoryId = selectedCategory!!.id,
+                                    categoryName = selectedCategory!!.name,
+                                    description = description,
+                                    date = dateText,
+                                    budgetAllocation = budgetAllocation
+                                )
                             )
-                        )
                     }
                 },
                 modifier = Modifier.fillMaxWidth(),
