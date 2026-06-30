@@ -30,6 +30,7 @@ sealed class NavigationItem(
     object Expenses : NavigationItem("Expenses", Icons.Default.Receipt, "expenses")
     object Income : NavigationItem("Income", Icons.Default.AttachMoney, "income")
     object Categories : NavigationItem("Categories", Icons.Default.Category, "categories")
+    object Reports : NavigationItem("Reports", Icons.Default.AutoGraph, "reports")
 }
 
 @Composable
@@ -70,7 +71,8 @@ fun AppDrawer(
             NavigationItem.Budget,
             NavigationItem.Expenses,
             NavigationItem.Income,
-            NavigationItem.Categories
+            NavigationItem.Categories,
+            NavigationItem.Reports
         )
         
         items.forEach { item ->

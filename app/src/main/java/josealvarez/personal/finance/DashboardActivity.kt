@@ -11,6 +11,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.AutoGraph
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -35,6 +36,8 @@ import josealvarez.personal.finance.ui.components.FinanceAppScaffold
 import josealvarez.personal.finance.ui.components.NavigationItem
 import josealvarez.personal.finance.ui.expense.ExpenseActivity
 import josealvarez.personal.finance.ui.income.IncomeActivity
+
+import josealvarez.personal.finance.ui.reports.ReportsActivity
 
 class DashboardActivity : ComponentActivity() {
 
@@ -70,6 +73,7 @@ class DashboardActivity : ComponentActivity() {
                             NavigationItem.Expenses -> startActivity(Intent(this, ExpenseActivity::class.java))
                             NavigationItem.Income -> startActivity(Intent(this, IncomeActivity::class.java))
                             NavigationItem.Categories -> startActivity(Intent(this, CategoryActivity::class.java))
+                            NavigationItem.Reports -> startActivity(Intent(this, ReportsActivity::class.java))
                         }
                     },
                     selectedItem = NavigationItem.Dashboard
@@ -87,6 +91,9 @@ class DashboardActivity : ComponentActivity() {
                             },
                             onExpensesClick = {
                                 startActivity(Intent(this@DashboardActivity, ExpenseActivity::class.java))
+                            },
+                            onReportsClick = {
+                                startActivity(Intent(this@DashboardActivity, ReportsActivity::class.java))
                             }
                         )
                     }
@@ -130,7 +137,8 @@ class DashboardActivity : ComponentActivity() {
 fun DashboardScreen(
     uiState: DashboardUiState,
     onBudgetClick: () -> Unit,
-    onExpensesClick: () -> Unit
+    onExpensesClick: () -> Unit,
+    onReportsClick: () -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -172,12 +180,21 @@ fun DashboardScreen(
                 modifier = Modifier.weight(1f)
             )
             QuickActionCard(
-                title = stringResource(R.string.quick_view),
-                icon = Icons.Default.Visibility,
-                onClick = onBudgetClick,
+                title = "Reports",
+                icon = Icons.Default.AutoGraph,
+                onClick = onReportsClick,
                 modifier = Modifier.weight(1f)
             )
         }
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        QuickActionCard(
+            title = stringResource(R.string.quick_view),
+            icon = Icons.Default.Visibility,
+            onClick = onBudgetClick,
+            modifier = Modifier.fillMaxWidth()
+        )
 
         if (uiState.isLoading) {
             Spacer(modifier = Modifier.height(32.dp))
@@ -294,7 +311,8 @@ fun DashboardScreenPreview() {
                     )
                 ),
                 onBudgetClick = {},
-                onExpensesClick = {}
+                onExpensesClick = {},
+                onReportsClick = {}
             )
         }
     }
