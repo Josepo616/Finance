@@ -23,6 +23,7 @@ import josealvarez.personal.finance.ui.components.FinanceAppScaffold
 import josealvarez.personal.finance.ui.components.NavigationItem
 import josealvarez.personal.finance.ui.expense.ExpenseActivity
 import josealvarez.personal.finance.ui.income.IncomeActivity
+import josealvarez.personal.finance.ui.reports.ReportsActivity
 
 class CategoryActivity : ComponentActivity() {
 
@@ -92,6 +93,10 @@ class CategoryActivity : ComponentActivity() {
                                     finish()
                                 }
                                 NavigationItem.Categories -> { /* Already here */ }
+                                NavigationItem.Reports -> {
+                                    startActivity(Intent(this, ReportsActivity::class.java))
+                                    finish()
+                                }
                             }
                         },
                         selectedItem = NavigationItem.Categories,

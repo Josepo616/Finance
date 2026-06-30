@@ -1,4 +1,4 @@
-package josealvarez.personal.finance.ui.budget
+package josealvarez.personal.finance.ui.reports
 
 import android.content.Intent
 import android.os.Bundle
@@ -7,9 +7,6 @@ import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.*
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.google.android.gms.auth.api.signin.GoogleSignIn
@@ -18,14 +15,14 @@ import com.google.firebase.auth.FirebaseAuth
 import josealvarez.personal.finance.DashboardActivity
 import josealvarez.personal.finance.LoginActivity
 import josealvarez.personal.finance.R
+import josealvarez.personal.finance.ui.budget.BudgetActivity
 import josealvarez.personal.finance.ui.category.CategoryActivity
 import josealvarez.personal.finance.ui.components.FinanceAppScaffold
 import josealvarez.personal.finance.ui.components.NavigationItem
 import josealvarez.personal.finance.ui.expense.ExpenseActivity
 import josealvarez.personal.finance.ui.income.IncomeActivity
-import josealvarez.personal.finance.ui.reports.ReportsActivity
 
-class BudgetActivity : ComponentActivity() {
+class ReportsActivity : ComponentActivity() {
 
     private lateinit var auth: FirebaseAuth
 
@@ -40,11 +37,13 @@ class BudgetActivity : ComponentActivity() {
         }
 
         setContent {
-            val snackbarHostState = remember { SnackbarHostState() }
-            
             MaterialTheme {
+                val viewModel: ReportsViewModel = viewModel(
+                    factory = ReportsViewModelFactory(user.uid)
+                )
+
                 FinanceAppScaffold(
-                    title = "Budget Limits",
+                    title = "Reports",
                     userName = user.displayName ?: "No Name",
                     userEmail = user.email ?: "No Email",
                     onLogoutClick = { signOut() },
@@ -56,7 +55,10 @@ class BudgetActivity : ComponentActivity() {
                                 startActivity(intent)
                                 finish()
                             }
-                            NavigationItem.Budget -> { /* Already here */ }
+                            NavigationItem.Budget -> {
+                                startActivity(Intent(this, BudgetActivity::class.java))
+                                finish()
+                            }
                             NavigationItem.Expenses -> {
                                 startActivity(Intent(this, ExpenseActivity::class.java))
                                 finish()
@@ -69,30 +71,18 @@ class BudgetActivity : ComponentActivity() {
                                 startActivity(Intent(this, CategoryActivity::class.java))
                                 finish()
                             }
-                            NavigationItem.Reports -> {
-                                startActivity(Intent(this, ReportsActivity::class.java))
-                                finish()
-                            }
+                            NavigationItem.Reports -> { /* Already here */ }
                         }
                     },
-                    selectedItem = NavigationItem.Budget,
-                    snackbarHost = { SnackbarHost(hostState = snackbarHostState) }
+                    selectedItem = NavigationItem.Reports
                 ) { padding ->
                     Surface(
                         modifier = Modifier.fillMaxSize().padding(padding),
                         color = MaterialTheme.colorScheme.background
                     ) {
-                        val viewModel: BudgetViewModel = viewModel(
-                            factory = BudgetViewModelFactory(user.uid)
-                        )
-                        val uiState by viewModel.uiState.collectAsState()
-
-                        BudgetScreen(
-                            uiState = uiState,
-                            onSave = { budget -> viewModel.saveBudget(budget) },
-                            onBack = { finish() },
-                            onSnackbarDismissed = { viewModel.clearSnackbar() },
-                            snackbarHostState = snackbarHostState
+                        ReportsScreen(
+                            viewModel = viewModel,
+                            onBackClick = { finish() }
                         )
                     }
                 }
