@@ -45,7 +45,7 @@ class BudgetViewModel(
             _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null)
             try {
                 var budget = repository.getBudget(uid)
-                val resetBudget = checkAndResetWeeklyLimit(budget)
+                val resetBudget = checkAndResetLimits(budget)
                 if (resetBudget != budget) {
                     repository.saveBudget(uid, resetBudget)
                     budget = resetBudget
@@ -60,30 +60,49 @@ class BudgetViewModel(
         }
     }
 
-    private fun checkAndResetWeeklyLimit(budget: Budget): Budget {
-        if (budget.currentWeekStartDate.isEmpty() || budget.currentWeekEndDate.isEmpty()) return budget
-
+    private fun checkAndResetLimits(budget: Budget): Budget {
         val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
         val todayStr = sdf.format(Date())
-        
-        return if (todayStr > budget.currentWeekEndDate) {
-            // Auto-advance to next week if current one ended
-            val calendar = Calendar.getInstance()
-            calendar.time = sdf.parse(budget.currentWeekEndDate)!!
-            calendar.add(Calendar.DAY_OF_YEAR, 1)
-            val newStart = sdf.format(calendar.time)
-            calendar.add(Calendar.DAY_OF_YEAR, 6)
-            val newEnd = sdf.format(calendar.time)
-            
-            budget.copy(
-                currentWeekStartDate = newStart,
-                currentWeekEndDate = newEnd,
-                currentWeeklyLimit = budget.originalWeeklyLimit,
-                lastResetDate = todayStr
+        val currentMonthStr = todayStr.substring(0, 7)
+
+        var updatedBudget = budget
+
+        // 1. Daily Reset Check
+        if (updatedBudget.lastDailyResetDate.isEmpty() || todayStr > updatedBudget.lastDailyResetDate) {
+            updatedBudget = updatedBudget.copy(
+                currentDailyLimit = updatedBudget.originalDailyLimit,
+                lastDailyResetDate = todayStr
             )
-        } else {
-            budget
         }
+
+        // 2. Monthly Reset Check
+        if (updatedBudget.lastMonthlyResetDate.isEmpty() || currentMonthStr > updatedBudget.lastMonthlyResetDate) {
+            updatedBudget = updatedBudget.copy(
+                currentMonthlyLimit = updatedBudget.originalMonthlyLimit,
+                lastMonthlyResetDate = currentMonthStr
+            )
+        }
+
+        // 3. Weekly Reset Check
+        if (updatedBudget.currentWeekStartDate.isNotEmpty() && updatedBudget.currentWeekEndDate.isNotEmpty()) {
+            if (todayStr > updatedBudget.currentWeekEndDate) {
+                val calendar = Calendar.getInstance()
+                calendar.time = sdf.parse(updatedBudget.currentWeekEndDate)!!
+                calendar.add(Calendar.DAY_OF_YEAR, 1)
+                val newStart = sdf.format(calendar.time)
+                calendar.add(Calendar.DAY_OF_YEAR, 6)
+                val newEnd = sdf.format(calendar.time)
+
+                updatedBudget = updatedBudget.copy(
+                    currentWeekStartDate = newStart,
+                    currentWeekEndDate = newEnd,
+                    currentWeeklyLimit = updatedBudget.originalWeeklyLimit,
+                    lastResetDate = todayStr
+                )
+            }
+        }
+
+        return updatedBudget
     }
 
     fun saveBudget(budget: Budget) {
@@ -91,23 +110,47 @@ class BudgetViewModel(
             _uiState.value = _uiState.value.copy(isSaving = true, errorMessage = null, saveSuccess = false)
             try {
                 val oldBudget = repository.getBudget(uid)
+                val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+                val todayStr = sdf.format(Date())
+                val cal = Calendar.getInstance()
+                val currentYear = cal.get(Calendar.YEAR)
+                val currentMonth = cal.get(Calendar.MONTH) + 1
+                val currentMonthStr = todayStr.substring(0, 7)
 
-                val updatedBudget = if (budget.currentWeekStartDate.isNotEmpty() && budget.currentWeekEndDate.isNotEmpty()) {
+                val dailyExpenses = expenseRepository.getExpensesInRange(uid, todayStr, todayStr)
+                val monthlyExpenses = expenseRepository.getMonthlyExpenses(uid, currentYear, currentMonth)
+
+                val dailySpent = dailyExpenses.filter { it.budgetAllocation == BudgetAllocation.DAILY }.sumOf { it.amount }
+                val monthlySpent = monthlyExpenses.filter { 
+                    it.budgetAllocation == BudgetAllocation.MONTHLY || 
+                    it.budgetAllocation == BudgetAllocation.WEEKLY || 
+                    it.budgetAllocation == BudgetAllocation.DAILY 
+                }.sumOf { it.amount }
+
+                var updatedBudget = budget.copy(
+                    originalDailyLimit = budget.dailyLimit,
+                    currentDailyLimit = budget.dailyLimit - dailySpent,
+                    lastDailyResetDate = todayStr,
+                    originalMonthlyLimit = budget.monthlyLimit,
+                    currentMonthlyLimit = budget.monthlyLimit - monthlySpent,
+                    lastMonthlyResetDate = currentMonthStr
+                )
+
+                if (updatedBudget.currentWeekStartDate.isNotEmpty() && updatedBudget.currentWeekEndDate.isNotEmpty()) {
                     val expenses = expenseRepository.getExpensesInRange(
                         uid, 
-                        budget.currentWeekStartDate, 
-                        budget.currentWeekEndDate
+                        updatedBudget.currentWeekStartDate, 
+                        updatedBudget.currentWeekEndDate
                     )
                     
                     val categories = categoryRepository.getCategories(uid)
                     val exemptCategoryIds = categories.filter { it.excludeFromWeeklyLimit }.map { it.id }.toSet()
                     
                     val totalSpent = expenses.filter { 
-                        it.budgetAllocation == BudgetAllocation.WEEKLY && it.categoryId !in exemptCategoryIds 
+                        (it.budgetAllocation == BudgetAllocation.WEEKLY || it.budgetAllocation == BudgetAllocation.DAILY) && 
+                        it.categoryId !in exemptCategoryIds 
                     }.sumOf { it.amount }
-                    budget.copy(currentWeeklyLimit = budget.originalWeeklyLimit - totalSpent)
-                } else {
-                    budget
+                    updatedBudget = updatedBudget.copy(currentWeeklyLimit = updatedBudget.originalWeeklyLimit - totalSpent)
                 }
 
                 repository.saveBudget(uid, updatedBudget)
