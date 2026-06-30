@@ -15,6 +15,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import josealvarez.personal.finance.model.Category
 import josealvarez.personal.finance.model.Expense
+import josealvarez.personal.finance.model.BudgetAllocation
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
@@ -35,8 +36,20 @@ fun AddExpenseScreen(
     var selectedCategory by remember { mutableStateOf<Category?>(null) }
     var description by remember { mutableStateOf("") }
     var dateText by remember { mutableStateOf(dateFormat.format(Date())) }
+    var budgetAllocation by remember { mutableStateOf(BudgetAllocation.WEEKLY) }
     var showDatePicker by remember { mutableStateOf(false) }
     var categoryExpanded by remember { mutableStateOf(false) }
+    var budgetExpanded by remember { mutableStateOf(false) }
+
+    LaunchedEffect(selectedCategory) {
+        selectedCategory?.let { category ->
+            budgetAllocation = if (category.name.equals("Bills", ignoreCase = true)) {
+                BudgetAllocation.NONE
+            } else {
+                BudgetAllocation.WEEKLY
+            }
+        }
+    }
 
     LaunchedEffect(uiState.categories) {
         if (selectedCategory == null && uiState.categories.isNotEmpty()) {
