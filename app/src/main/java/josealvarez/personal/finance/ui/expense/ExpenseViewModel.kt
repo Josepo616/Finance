@@ -10,6 +10,7 @@ import josealvarez.personal.finance.data.repository.ExpenseRepository
 import josealvarez.personal.finance.model.AuditLog
 import josealvarez.personal.finance.model.Category
 import josealvarez.personal.finance.model.Expense
+import josealvarez.personal.finance.model.BudgetAllocation
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -160,7 +161,7 @@ class ExpenseViewModel(
                     null
                 }
 
-                val exclude = category?.excludeFromWeeklyLimit ?: false
+                val exclude = category?.excludeFromWeeklyLimit ?: false || expense.budgetAllocation != BudgetAllocation.WEEKLY
                 
                 val updatedBudget = if (exclude) {
                     budget.copy(availableFunds = budget.availableFunds - expense.amount)
@@ -216,7 +217,7 @@ class ExpenseViewModel(
                     null
                 }
                 
-                val exclude = category?.excludeFromWeeklyLimit ?: false
+                val exclude = category?.excludeFromWeeklyLimit ?: false || expense.budgetAllocation != BudgetAllocation.WEEKLY
 
                 val updatedBudget = if (exclude) {
                     budget.copy(availableFunds = budget.availableFunds + expense.amount)
