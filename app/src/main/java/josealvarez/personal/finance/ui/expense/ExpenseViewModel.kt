@@ -166,15 +166,15 @@ class ExpenseViewModel(
                 
                 var updatedBudget = budget.copy(availableFunds = budget.availableFunds - expense.amount)
                 if (!exclude) {
-                    updatedBudget = updatedBudget.copy(currentWeeklyLimit = updatedBudget.currentWeeklyLimit - expense.amount)
+                    updatedBudget = updatedBudget.copy(currentWeeklyLimit = updatedBudget.currentWeeklyLimit - expense.personalShare)
                 }
                 if (expense.budgetAllocation == BudgetAllocation.DAILY) {
-                    updatedBudget = updatedBudget.copy(currentDailyLimit = updatedBudget.currentDailyLimit - expense.amount)
+                    updatedBudget = updatedBudget.copy(currentDailyLimit = updatedBudget.currentDailyLimit - expense.personalShare)
                 }
                 if (expense.budgetAllocation == BudgetAllocation.DAILY ||
                     expense.budgetAllocation == BudgetAllocation.WEEKLY ||
                     expense.budgetAllocation == BudgetAllocation.MONTHLY) {
-                    updatedBudget = updatedBudget.copy(currentMonthlyLimit = updatedBudget.currentMonthlyLimit - expense.amount)
+                    updatedBudget = updatedBudget.copy(currentMonthlyLimit = updatedBudget.currentMonthlyLimit - expense.personalShare)
                 }
                 budgetRepository.saveBudget(uid, updatedBudget)
 
@@ -227,15 +227,15 @@ class ExpenseViewModel(
 
                 var updatedBudget = budget.copy(availableFunds = budget.availableFunds + expense.amount)
                 if (!exclude) {
-                    updatedBudget = updatedBudget.copy(currentWeeklyLimit = updatedBudget.currentWeeklyLimit + expense.amount)
+                    updatedBudget = updatedBudget.copy(currentWeeklyLimit = updatedBudget.currentWeeklyLimit + expense.personalShare)
                 }
                 if (expense.budgetAllocation == BudgetAllocation.DAILY) {
-                    updatedBudget = updatedBudget.copy(currentDailyLimit = updatedBudget.currentDailyLimit + expense.amount)
+                    updatedBudget = updatedBudget.copy(currentDailyLimit = updatedBudget.currentDailyLimit + expense.personalShare)
                 }
                 if (expense.budgetAllocation == BudgetAllocation.DAILY ||
                     expense.budgetAllocation == BudgetAllocation.WEEKLY ||
                     expense.budgetAllocation == BudgetAllocation.MONTHLY) {
-                    updatedBudget = updatedBudget.copy(currentMonthlyLimit = updatedBudget.currentMonthlyLimit + expense.amount)
+                    updatedBudget = updatedBudget.copy(currentMonthlyLimit = updatedBudget.currentMonthlyLimit + expense.personalShare)
                 }
                 budgetRepository.saveBudget(uid, updatedBudget)
 

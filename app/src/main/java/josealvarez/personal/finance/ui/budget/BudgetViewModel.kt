@@ -120,12 +120,12 @@ class BudgetViewModel(
                 val dailyExpenses = expenseRepository.getExpensesInRange(uid, todayStr, todayStr)
                 val monthlyExpenses = expenseRepository.getMonthlyExpenses(uid, currentYear, currentMonth)
 
-                val dailySpent = dailyExpenses.filter { it.budgetAllocation == BudgetAllocation.DAILY }.sumOf { it.amount }
+                val dailySpent = dailyExpenses.filter { it.budgetAllocation == BudgetAllocation.DAILY }.sumOf { it.personalShare }
                 val monthlySpent = monthlyExpenses.filter { 
                     it.budgetAllocation == BudgetAllocation.MONTHLY || 
                     it.budgetAllocation == BudgetAllocation.WEEKLY || 
                     it.budgetAllocation == BudgetAllocation.DAILY 
-                }.sumOf { it.amount }
+                }.sumOf { it.personalShare }
 
                 var updatedBudget = budget.copy(
                     originalDailyLimit = budget.dailyLimit,
@@ -149,7 +149,7 @@ class BudgetViewModel(
                     val totalSpent = expenses.filter { 
                         (it.budgetAllocation == BudgetAllocation.WEEKLY || it.budgetAllocation == BudgetAllocation.DAILY) && 
                         it.categoryId !in exemptCategoryIds 
-                    }.sumOf { it.amount }
+                    }.sumOf { it.personalShare }
                     updatedBudget = updatedBudget.copy(currentWeeklyLimit = updatedBudget.originalWeeklyLimit - totalSpent)
                 }
 
