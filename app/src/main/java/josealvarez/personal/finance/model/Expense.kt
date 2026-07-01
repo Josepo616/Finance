@@ -15,7 +15,9 @@ data class Expense(
     val date: String = "",
     val createdAt: Timestamp = Timestamp.now(),
     val isDeleted: Boolean = false,
-    val budgetAllocation: BudgetAllocation = BudgetAllocation.WEEKLY
+    val budgetAllocation: BudgetAllocation = BudgetAllocation.WEEKLY,
+    val isShared: Boolean = false,
+    val personalShare: Double = amount
 ) {
     fun toMap(): Map<String, Any> = mapOf(
         "amount" to amount,
@@ -25,7 +27,9 @@ data class Expense(
         "date" to date,
         "createdAt" to createdAt,
         "isDeleted" to isDeleted,
-        "budgetAllocation" to budgetAllocation.name
+        "budgetAllocation" to budgetAllocation.name,
+        "isShared" to isShared,
+        "personalShare" to personalShare
     )
 
     companion object {
@@ -41,16 +45,22 @@ data class Expense(
                 BudgetAllocation.WEEKLY
             }
 
+            val amount = (map["amount"] as? Number)?.toDouble() ?: 0.0
+            val isShared = map["isShared"] as? Boolean ?: false
+            val personalShare = (map["personalShare"] as? Number)?.toDouble() ?: amount
+
             return Expense(
                 id = id,
-                amount = (map["amount"] as? Number)?.toDouble() ?: 0.0,
+                amount = amount,
                 categoryId = map["categoryId"] as? String ?: "",
                 categoryName = map["categoryName"] as? String ?: map["category"] as? String ?: "Other",
                 description = map["description"] as? String ?: "",
                 date = map["date"] as? String ?: "",
                 createdAt = map["createdAt"] as? Timestamp ?: Timestamp.now(),
                 isDeleted = map["isDeleted"] as? Boolean ?: false,
-                budgetAllocation = budgetAllocation
+                budgetAllocation = budgetAllocation,
+                isShared = isShared,
+                personalShare = personalShare
             )
         }
     }
