@@ -37,6 +37,8 @@ fun AddExpenseScreen(
     var description by remember { mutableStateOf("") }
     var dateText by remember { mutableStateOf(dateFormat.format(Date())) }
     var budgetAllocation by remember { mutableStateOf(BudgetAllocation.WEEKLY) }
+    var isShared by remember { mutableStateOf(false) }
+    var personalShareText by remember { mutableStateOf("") }
     var showDatePicker by remember { mutableStateOf(false) }
     var categoryExpanded by remember { mutableStateOf(false) }
     var budgetExpanded by remember { mutableStateOf(false) }
@@ -223,6 +225,42 @@ fun AddExpenseScreen(
                 )
             }
 
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Checkbox(
+                    checked = isShared,
+                    onCheckedChange = { isShared = it }
+                )
+                Text(
+                    text = "I paid on behalf of other people",
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            }
+
+            if (isShared) {
+                val parsedAmount = amount.toDoubleOrNull() ?: 0.0
+                val parsedPersonalShare = personalShareText.toDoubleOrNull()
+                val isPersonalShareInvalid = parsedPersonalShare == null || parsedPersonalShare < 0.0 || parsedPersonalShare > parsedAmount
+
+                OutlinedTextField(
+                    value = personalShareText,
+                    onValueChange = { personalShareText = filterDecimalInput(it) },
+                    label = { Text("My personal share") },
+                    prefix = { Text("$") },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                    singleLine = true,
+                    isError = isPersonalShareInvalid,
+                    supportingText = {
+                        if (isPersonalShareInvalid) {
+                            Text("Must be a valid number between $0.00 and $${String.format(Locale.getDefault(), "%.2f", parsedAmount)}")
+                        }
+                    },
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+
             OutlinedTextField(
                 value = dateText,
                 onValueChange = {},
@@ -243,24 +281,30 @@ fun AddExpenseScreen(
 
             Spacer(modifier = Modifier.height(8.dp))
 
+            val parsedAmount = amount.toDoubleOrNull() ?: 0.0
+            val parsedPersonalShare = personalShareText.toDoubleOrNull()
+            val isPersonalShareInvalid = isShared && (parsedPersonalShare == null || parsedPersonalShare < 0.0 || parsedPersonalShare > parsedAmount)
+
             Button(
                 onClick = {
-                    val parsedAmount = amount.toDoubleOrNull()
-                    if (parsedAmount != null && parsedAmount > 0 && selectedCategory != null) {
+                    if (parsedAmount > 0 && selectedCategory != null && (!isShared || !isPersonalShareInvalid)) {
+                        val finalPersonalShare = if (isShared) parsedPersonalShare ?: parsedAmount else parsedAmount
                         onAddExpense(
-                                Expense(
-                                    amount = parsedAmount,
-                                    categoryId = selectedCategory!!.id,
-                                    categoryName = selectedCategory!!.name,
-                                    description = description,
-                                    date = dateText,
-                                    budgetAllocation = budgetAllocation
-                                )
+                            Expense(
+                                amount = parsedAmount,
+                                categoryId = selectedCategory!!.id,
+                                categoryName = selectedCategory!!.name,
+                                description = description,
+                                date = dateText,
+                                budgetAllocation = budgetAllocation,
+                                isShared = isShared,
+                                personalShare = finalPersonalShare
                             )
+                        )
                     }
                 },
                 modifier = Modifier.fillMaxWidth(),
-                enabled = !uiState.isSaving && amount.isNotBlank() && selectedCategory != null
+                enabled = !uiState.isSaving && amount.isNotBlank() && selectedCategory != null && (!isShared || !isPersonalShareInvalid)
             ) {
                 if (uiState.isSaving) {
                     CircularProgressIndicator(
