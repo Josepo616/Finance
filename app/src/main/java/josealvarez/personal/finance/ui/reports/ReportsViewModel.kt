@@ -135,7 +135,7 @@ class ReportsViewModel(
         val dailyLimit = budgetRepository.getHistoricalDailyLimit(uid, todayStr) ?: currentBudget.dailyLimit
         val dailyActual = monthlyExpenses
             .filter { it.date == todayStr && it.budgetAllocation == BudgetAllocation.DAILY }
-            .sumOf { it.amount }
+            .sumOf { it.personalShare }
         comparisons.add(BudgetComparison(
             label = "Daily",
             limit = dailyLimit,
@@ -150,7 +150,7 @@ class ReportsViewModel(
         val weeklyExpenses = expenseRepository.getExpensesInRange(uid, weekRange.first, weekRange.second)
         val weeklyActual = weeklyExpenses
             .filter { (it.budgetAllocation == BudgetAllocation.WEEKLY || it.budgetAllocation == BudgetAllocation.DAILY) && it.categoryId !in exemptCategoryIds }
-            .sumOf { it.amount }
+            .sumOf { it.personalShare }
         comparisons.add(BudgetComparison(
             label = "Weekly",
             limit = weeklyLimit,
@@ -163,7 +163,7 @@ class ReportsViewModel(
         val monthlyLimit = budgetRepository.getHistoricalMonthlyLimit(uid, monthId) ?: currentBudget.monthlyLimit
         val monthlyActual = monthlyExpenses
             .filter { it.budgetAllocation == BudgetAllocation.MONTHLY || it.budgetAllocation == BudgetAllocation.WEEKLY || it.budgetAllocation == BudgetAllocation.DAILY }
-            .sumOf { it.amount }
+            .sumOf { it.personalShare }
         comparisons.add(BudgetComparison(
             label = "Monthly",
             limit = monthlyLimit,
