@@ -7,5 +7,6 @@ enum class IncomeCategory(val displayName: String) {
     GIFT("Gift"),
     REFUND("Refund"),
     RENTAL("Rental"),
+    REIMBURSEMENT("Reimbursement"),
     OTHER("Other")
 }
