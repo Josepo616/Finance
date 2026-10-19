@@ -30,6 +30,7 @@ import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.firebase.auth.FirebaseAuth
 import josealvarez.personal.finance.model.Budget
+import josealvarez.personal.finance.model.FinanceView
 import josealvarez.personal.finance.ui.budget.BudgetActivity
 import josealvarez.personal.finance.ui.category.CategoryActivity
 import josealvarez.personal.finance.ui.components.FinanceAppScaffold
@@ -86,6 +87,7 @@ class DashboardActivity : ComponentActivity() {
                     ) {
                         DashboardScreen(
                             uiState = uiState,
+                            onViewChange = { viewModel.selectFinanceView(it) },
                             onBudgetClick = {
                                 startActivity(Intent(this@DashboardActivity, BudgetActivity::class.java))
                             },
@@ -136,6 +138,7 @@ class DashboardActivity : ComponentActivity() {
 @Composable
 fun DashboardScreen(
     uiState: DashboardUiState,
+    onViewChange: (FinanceView) -> Unit,
     onBudgetClick: () -> Unit,
     onExpensesClick: () -> Unit,
     onReportsClick: () -> Unit
@@ -155,6 +158,27 @@ fun DashboardScreen(
                 .align(Alignment.Start)
                 .padding(bottom = 16.dp)
         )
+
+        TabRow(
+            selectedTabIndex = when(uiState.selectedView) {
+                FinanceView.CASH_FLOW -> 0
+                FinanceView.PERSONAL_SPENDING -> 1
+            },
+            containerColor = MaterialTheme.colorScheme.surface,
+            contentColor = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.padding(bottom = 16.dp)
+        ) {
+            Tab(
+                selected = uiState.selectedView == FinanceView.CASH_FLOW,
+                onClick = { onViewChange(FinanceView.CASH_FLOW) },
+                text = { Text("Cash Flow", fontSize = 14.sp, fontWeight = FontWeight.Medium) }
+            )
+            Tab(
+                selected = uiState.selectedView == FinanceView.PERSONAL_SPENDING,
+                onClick = { onViewChange(FinanceView.PERSONAL_SPENDING) },
+                text = { Text("Personal Spending", fontSize = 14.sp, fontWeight = FontWeight.Medium) }
+            )
+        }
 
         WeeklyRemainingCard(budget = uiState.budget)
 
@@ -310,6 +334,7 @@ fun DashboardScreenPreview() {
                         currentWeeklyLimit = 400.0
                     )
                 ),
+                onViewChange = {},
                 onBudgetClick = {},
                 onExpensesClick = {},
                 onReportsClick = {}
