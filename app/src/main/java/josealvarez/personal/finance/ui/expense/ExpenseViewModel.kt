@@ -11,6 +11,7 @@ import josealvarez.personal.finance.model.AuditLog
 import josealvarez.personal.finance.model.Category
 import josealvarez.personal.finance.model.Expense
 import josealvarez.personal.finance.model.BudgetAllocation
+import josealvarez.personal.finance.model.FinanceView
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -39,7 +40,8 @@ data class ExpenseUiState(
     val viewMode: ExpenseViewMode = ExpenseViewMode.MONTHLY,
     val isCurrentMonth: Boolean = true,
     val isCurrentDay: Boolean = true,
-    val excludeExemptFromTotal: Boolean = false
+    val excludeExemptFromTotal: Boolean = false,
+    val selectedView: FinanceView = FinanceView.CASH_FLOW
 )
 
 class ExpenseViewModel(
@@ -92,6 +94,10 @@ class ExpenseViewModel(
     fun setViewMode(mode: ExpenseViewMode) {
         _uiState.value = _uiState.value.copy(viewMode = mode)
         loadExpenses()
+    }
+
+    fun selectFinanceView(view: FinanceView) {
+        _uiState.value = _uiState.value.copy(selectedView = view)
     }
 
     fun setDateRange(start: String, end: String) {

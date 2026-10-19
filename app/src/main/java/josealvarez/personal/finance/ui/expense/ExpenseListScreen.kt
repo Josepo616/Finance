@@ -23,6 +23,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import josealvarez.personal.finance.model.Category
 import josealvarez.personal.finance.model.Expense
+import josealvarez.personal.finance.model.FinanceView
 import josealvarez.personal.finance.ui.common.MonthSelector
 import java.text.DateFormatSymbols
 import java.text.SimpleDateFormat
@@ -36,6 +37,7 @@ fun ExpenseListScreen(
     onDeleteExpense: (Expense) -> Unit,
     onNavigateDate: (Int) -> Unit,
     onViewModeChange: (ExpenseViewMode) -> Unit,
+    onFinanceViewChange: (FinanceView) -> Unit,
     onDateRangeChange: (String, String) -> Unit,
     onToggleExcludeExempt: () -> Unit,
     onBack: () -> Unit,
@@ -59,6 +61,27 @@ fun ExpenseListScreen(
     Box(modifier = Modifier.fillMaxSize()) {
         Column(modifier = Modifier.fillMaxSize()) {
             
+            // Cash Flow vs Personal Spending View Toggle
+            TabRow(
+                selectedTabIndex = when(uiState.selectedView) {
+                    FinanceView.CASH_FLOW -> 0
+                    FinanceView.PERSONAL_SPENDING -> 1
+                },
+                containerColor = MaterialTheme.colorScheme.primaryContainer,
+                contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+            ) {
+                Tab(
+                    selected = uiState.selectedView == FinanceView.CASH_FLOW,
+                    onClick = { onFinanceViewChange(FinanceView.CASH_FLOW) },
+                    text = { Text("Cash Flow", fontSize = 13.sp, fontWeight = FontWeight.Bold) }
+                )
+                Tab(
+                    selected = uiState.selectedView == FinanceView.PERSONAL_SPENDING,
+                    onClick = { onFinanceViewChange(FinanceView.PERSONAL_SPENDING) },
+                    text = { Text("Personal Spending", fontSize = 13.sp, fontWeight = FontWeight.Bold) }
+                )
+            }
+
             // View Mode Toggle
             TabRow(
                 selectedTabIndex = when(uiState.viewMode) {
@@ -140,9 +163,9 @@ fun ExpenseListScreen(
                                 uiState.expenses.filter { expense ->
                                     val isExcluded = uiState.categories.find { it.id == expense.categoryId }?.excludeFromWeeklyLimit ?: false
                                     !isExcluded
-                                }.sumOf { it.amount }
+                                }.sumOf { if (uiState.selectedView == FinanceView.CASH_FLOW) it.amount else it.personalShare }
                             } else {
-                                uiState.expenses.sumOf { it.amount }
+                                uiState.expenses.sumOf { if (uiState.selectedView == FinanceView.CASH_FLOW) it.amount else it.personalShare }
                             }
 
                             val totalLabel = when(uiState.viewMode) {
@@ -200,6 +223,7 @@ fun ExpenseListScreen(
                             ExpenseItem(
                                 expense = expense,
                                 isExcluded = isExcluded,
+                                selectedView = uiState.selectedView,
                                 onDelete = { onDeleteExpense(expense) }
                             )
                         }
@@ -358,6 +382,7 @@ fun DateSelector(
 private fun ExpenseItem(
     expense: Expense,
     isExcluded: Boolean,
+    selectedView: FinanceView,
     onDelete: () -> Unit
 ) {
     ElevatedCard(
@@ -397,8 +422,9 @@ private fun ExpenseItem(
                             }
                         }
                     }
+                    val displayAmount = if (selectedView == FinanceView.CASH_FLOW) expense.amount else expense.personalShare
                     Text(
-                        text = "$%.2f".format(expense.amount),
+                        text = "$%.2f".format(displayAmount),
                         fontWeight = FontWeight.Bold,
                         fontSize = 16.sp,
                         color = if (isExcluded) MaterialTheme.colorScheme.outline else Color.Unspecified
@@ -452,6 +478,7 @@ private fun ExpenseListScreenPreview() {
             onDeleteExpense = {},
             onNavigateDate = {},
             onViewModeChange = {},
+            onFinanceViewChange = {},
             onDateRangeChange = { _, _ -> },
             onToggleExcludeExempt = {},
             onBack = {},
