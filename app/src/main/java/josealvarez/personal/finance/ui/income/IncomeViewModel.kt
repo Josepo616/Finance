@@ -8,6 +8,7 @@ import josealvarez.personal.finance.data.repository.BudgetRepository
 import josealvarez.personal.finance.data.repository.IncomeRepository
 import josealvarez.personal.finance.model.AuditLog
 import josealvarez.personal.finance.model.Income
+import josealvarez.personal.finance.model.FinanceView
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -23,7 +24,8 @@ data class IncomeUiState(
     val showAddScreen: Boolean = false,
     val selectedMonth: Int = Calendar.getInstance().get(Calendar.MONTH) + 1,
     val selectedYear: Int = Calendar.getInstance().get(Calendar.YEAR),
-    val isCurrentMonth: Boolean = true
+    val isCurrentMonth: Boolean = true,
+    val selectedView: FinanceView = FinanceView.CASH_FLOW
 )
 
 class IncomeViewModel(
@@ -55,6 +57,10 @@ class IncomeViewModel(
                 )
             }
         }
+    }
+
+    fun selectFinanceView(view: FinanceView) {
+        _uiState.value = _uiState.value.copy(selectedView = view)
     }
 
     fun navigateMonth(delta: Int) {

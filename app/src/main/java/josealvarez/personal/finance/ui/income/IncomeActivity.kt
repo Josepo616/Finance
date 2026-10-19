@@ -105,6 +105,7 @@ class IncomeActivity : ComponentActivity() {
                                 onAddClick = { viewModel.showAddForm() },
                                 onDeleteIncome = { income -> viewModel.deleteIncome(income) },
                                 onNavigateMonth = { delta -> viewModel.navigateMonth(delta) },
+                                onFinanceViewChange = { view -> viewModel.selectFinanceView(view) },
                                 onBack = { finish() },
                                 onSnackbarDismissed = { viewModel.clearSnackbar() },
                                 snackbarHostState = snackbarHostState

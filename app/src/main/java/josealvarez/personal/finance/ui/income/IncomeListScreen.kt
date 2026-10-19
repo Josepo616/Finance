@@ -18,7 +18,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import josealvarez.personal.finance.model.Income
 import josealvarez.personal.finance.model.IncomeCategory
-
+import josealvarez.personal.finance.model.FinanceView
 import josealvarez.personal.finance.ui.common.MonthSelector
 
 @Composable
@@ -27,6 +27,7 @@ fun IncomeListScreen(
     onAddClick: () -> Unit,
     onDeleteIncome: (Income) -> Unit,
     onNavigateMonth: (Int) -> Unit,
+    onFinanceViewChange: (FinanceView) -> Unit,
     onBack: () -> Unit,
     onSnackbarDismissed: () -> Unit,
     snackbarHostState: SnackbarHostState
@@ -47,6 +48,27 @@ fun IncomeListScreen(
 
     Box(modifier = Modifier.fillMaxSize()) {
         Column(modifier = Modifier.fillMaxSize()) {
+            // Cash Flow vs Personal Spending View Toggle
+            TabRow(
+                selectedTabIndex = when(uiState.selectedView) {
+                    FinanceView.CASH_FLOW -> 0
+                    FinanceView.PERSONAL_SPENDING -> 1
+                },
+                containerColor = MaterialTheme.colorScheme.primaryContainer,
+                contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+            ) {
+                Tab(
+                    selected = uiState.selectedView == FinanceView.CASH_FLOW,
+                    onClick = { onFinanceViewChange(FinanceView.CASH_FLOW) },
+                    text = { Text("Cash Flow", fontSize = 13.sp, fontWeight = FontWeight.Bold) }
+                )
+                Tab(
+                    selected = uiState.selectedView == FinanceView.PERSONAL_SPENDING,
+                    onClick = { onFinanceViewChange(FinanceView.PERSONAL_SPENDING) },
+                    text = { Text("Personal Spending", fontSize = 13.sp, fontWeight = FontWeight.Bold) }
+                )
+            }
+
             MonthSelector(
                 month = uiState.selectedMonth,
                 year = uiState.selectedYear,
@@ -205,6 +227,7 @@ private fun IncomeListScreenPreview() {
             onAddClick = {},
             onDeleteIncome = {},
             onNavigateMonth = {},
+            onFinanceViewChange = {},
             onBack = {},
             onSnackbarDismissed = {},
             snackbarHostState = remember { SnackbarHostState() }
