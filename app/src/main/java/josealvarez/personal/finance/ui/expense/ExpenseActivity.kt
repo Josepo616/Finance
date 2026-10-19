@@ -106,6 +106,7 @@ class ExpenseActivity : ComponentActivity() {
                                 onDeleteExpense = { expense -> viewModel.deleteExpense(expense) },
                                 onNavigateDate = { delta -> viewModel.navigateDate(delta) },
                                 onViewModeChange = { mode -> viewModel.setViewMode(mode) },
+                                onFinanceViewChange = { view -> viewModel.selectFinanceView(view) },
                                 onDateRangeChange = { start, end -> viewModel.setDateRange(start, end) },
                                 onToggleExcludeExempt = { viewModel.toggleExcludeExempt() },
                                 onBack = { finish() },
