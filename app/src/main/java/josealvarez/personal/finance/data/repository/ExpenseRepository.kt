@@ -96,6 +96,14 @@ class ExpenseRepository {
         }
     }
 
+    suspend fun updateExpense(uid: String, expense: Expense) {
+        db.collection("users").document(uid)
+            .collection("expenses")
+            .document(expense.id)
+            .set(expense.toMap())
+            .await()
+    }
+
     suspend fun softDeleteExpense(uid: String, expenseId: String) {
         db.collection("users").document(uid)
             .collection("expenses")

@@ -50,6 +50,14 @@ class IncomeRepository {
         }
     }
 
+    suspend fun updateIncome(uid: String, income: Income) {
+        db.collection("users").document(uid)
+            .collection("income")
+            .document(income.id)
+            .set(income.toMap())
+            .await()
+    }
+
     suspend fun softDeleteIncome(uid: String, incomeId: String) {
         db.collection("users").document(uid)
             .collection("income")
