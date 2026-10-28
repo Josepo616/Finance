@@ -56,6 +56,7 @@ class IncomeActivity : ComponentActivity() {
                         AddIncomeScreen(
                             uiState = uiState,
                             onAddIncome = { income -> viewModel.addIncome(income) },
+                            onUpdateIncome = { income -> viewModel.updateIncome(income) },
                             onBack = { viewModel.hideAddForm() },
                             onSnackbarDismissed = { viewModel.clearSnackbar() }
                         )
@@ -104,6 +105,7 @@ class IncomeActivity : ComponentActivity() {
                                 uiState = uiState,
                                 onAddClick = { viewModel.showAddForm() },
                                 onDeleteIncome = { income -> viewModel.deleteIncome(income) },
+                                onEditIncome = { income -> viewModel.startEditingIncome(income) },
                                 onNavigateMonth = { delta -> viewModel.navigateMonth(delta) },
                                 onFinanceViewChange = { view -> viewModel.selectFinanceView(view) },
                                 onBack = { finish() },

@@ -25,16 +25,18 @@ import java.util.Locale
 fun AddIncomeScreen(
     uiState: IncomeUiState,
     onAddIncome: (Income) -> Unit,
+    onUpdateIncome: (Income) -> Unit,
     onBack: () -> Unit,
     onSnackbarDismissed: () -> Unit
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
     val dateFormat = remember { SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()) }
 
-    var amount by remember { mutableStateOf("") }
-    var selectedCategory by remember { mutableStateOf(IncomeCategory.OTHER) }
-    var description by remember { mutableStateOf("") }
-    var dateText by remember { mutableStateOf(dateFormat.format(Date())) }
+    val editing = uiState.editingIncome
+    var amount by remember { mutableStateOf(editing?.amount?.toString() ?: "") }
+    var selectedCategory by remember { mutableStateOf(editing?.category ?: IncomeCategory.OTHER) }
+    var description by remember { mutableStateOf(editing?.description ?: "") }
+    var dateText by remember { mutableStateOf(editing?.date ?: dateFormat.format(Date())) }
     var showDatePicker by remember { mutableStateOf(false) }
     var categoryExpanded by remember { mutableStateOf(false) }
 
@@ -74,7 +76,7 @@ fun AddIncomeScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Add Income") },
+                title = { Text(if (uiState.editingIncome != null) "Edit Income" else "Add Income") },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(
@@ -167,14 +169,26 @@ fun AddIncomeScreen(
                 onClick = {
                     val parsedAmount = amount.toDoubleOrNull()
                     if (parsedAmount != null && parsedAmount > 0) {
-                        onAddIncome(
-                            Income(
-                                amount = parsedAmount,
-                                category = selectedCategory,
-                                description = description,
-                                date = dateText
+                        val editing = uiState.editingIncome
+                        if (editing != null) {
+                            onUpdateIncome(
+                                editing.copy(
+                                    amount = parsedAmount,
+                                    category = selectedCategory,
+                                    description = description,
+                                    date = dateText
+                                )
                             )
-                        )
+                        } else {
+                            onAddIncome(
+                                Income(
+                                    amount = parsedAmount,
+                                    category = selectedCategory,
+                                    description = description,
+                                    date = dateText
+                                )
+                            )
+                        }
                     }
                 },
                 modifier = Modifier.fillMaxWidth(),
@@ -188,7 +202,7 @@ fun AddIncomeScreen(
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                 }
-                Text("Add Income")
+                Text(if (uiState.editingIncome != null) "Save Changes" else "Add Income")
             }
         }
     }
@@ -211,6 +225,7 @@ private fun AddIncomeScreenPreview() {
         AddIncomeScreen(
             uiState = IncomeUiState(),
             onAddIncome = {},
+            onUpdateIncome = {},
             onBack = {},
             onSnackbarDismissed = {}
         )

@@ -1,5 +1,6 @@
 package josealvarez.personal.finance.ui.income
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -26,6 +27,7 @@ fun IncomeListScreen(
     uiState: IncomeUiState,
     onAddClick: () -> Unit,
     onDeleteIncome: (Income) -> Unit,
+    onEditIncome: (Income) -> Unit,
     onNavigateMonth: (Int) -> Unit,
     onFinanceViewChange: (FinanceView) -> Unit,
     onBack: () -> Unit,
@@ -123,7 +125,8 @@ fun IncomeListScreen(
                         items(uiState.incomeList) { income ->
                             IncomeItem(
                                 income = income,
-                                onDelete = { onDeleteIncome(income) }
+                                onDelete = { onDeleteIncome(income) },
+                                onEdit = { onEditIncome(income) }
                             )
                         }
                     }
@@ -145,10 +148,13 @@ fun IncomeListScreen(
 @Composable
 private fun IncomeItem(
     income: Income,
-    onDelete: () -> Unit
+    onDelete: () -> Unit,
+    onEdit: () -> Unit
 ) {
     ElevatedCard(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onEdit),
         shape = MaterialTheme.shapes.medium
     ) {
         Row(
@@ -226,6 +232,7 @@ private fun IncomeListScreenPreview() {
             ),
             onAddClick = {},
             onDeleteIncome = {},
+            onEditIncome = {},
             onNavigateMonth = {},
             onFinanceViewChange = {},
             onBack = {},

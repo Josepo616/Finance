@@ -25,7 +25,8 @@ data class IncomeUiState(
     val selectedMonth: Int = Calendar.getInstance().get(Calendar.MONTH) + 1,
     val selectedYear: Int = Calendar.getInstance().get(Calendar.YEAR),
     val isCurrentMonth: Boolean = true,
-    val selectedView: FinanceView = FinanceView.CASH_FLOW
+    val selectedView: FinanceView = FinanceView.CASH_FLOW,
+    val editingIncome: Income? = null
 )
 
 class IncomeViewModel(
@@ -151,11 +152,53 @@ class IncomeViewModel(
     }
 
     fun showAddForm() {
-        _uiState.value = _uiState.value.copy(showAddScreen = true)
+        _uiState.value = _uiState.value.copy(showAddScreen = true, editingIncome = null)
+    }
+
+    fun startEditingIncome(income: Income) {
+        _uiState.value = _uiState.value.copy(showAddScreen = true, editingIncome = income)
+    }
+
+    fun updateIncome(updatedIncome: Income) {
+        val oldIncome = _uiState.value.editingIncome ?: return
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isSaving = true, errorMessage = null, saveSuccess = false)
+            try {
+                val budget = budgetRepository.getBudget(uid)
+                // Adjust available funds: remove old income amount, add new income amount
+                val updatedAvailableFunds = budget.availableFunds - oldIncome.amount + updatedIncome.amount
+                val updatedBudget = budget.copy(availableFunds = updatedAvailableFunds)
+
+                budgetRepository.saveBudget(uid, updatedBudget)
+                incomeRepository.updateIncome(uid, updatedIncome)
+
+                auditRepository.logAction(
+                    uid, AuditLog(
+                        action = "UPDATE_INCOME",
+                        details = "Updated income: ${updatedIncome.description} (${updatedIncome.category})",
+                        amount = updatedIncome.amount,
+                        metadata = mapOf("incomeId" to updatedIncome.id)
+                    )
+                )
+
+                _uiState.value = _uiState.value.copy(
+                    isSaving = false,
+                    saveSuccess = true,
+                    showAddScreen = false,
+                    editingIncome = null
+                )
+                loadIncome()
+            } catch (e: Exception) {
+                _uiState.value = _uiState.value.copy(
+                    isSaving = false,
+                    errorMessage = e.message ?: "Failed to update income"
+                )
+            }
+        }
     }
 
     fun hideAddForm() {
-        _uiState.value = _uiState.value.copy(showAddScreen = false)
+        _uiState.value = _uiState.value.copy(showAddScreen = false, editingIncome = null)
     }
 
     fun clearSnackbar() {
