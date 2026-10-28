@@ -35,6 +35,7 @@ fun ExpenseListScreen(
     uiState: ExpenseUiState,
     onAddClick: () -> Unit,
     onDeleteExpense: (Expense) -> Unit,
+    onEditExpense: (Expense) -> Unit,
     onNavigateDate: (Int) -> Unit,
     onViewModeChange: (ExpenseViewMode) -> Unit,
     onFinanceViewChange: (FinanceView) -> Unit,
@@ -224,7 +225,8 @@ fun ExpenseListScreen(
                                 expense = expense,
                                 isExcluded = isExcluded,
                                 selectedView = uiState.selectedView,
-                                onDelete = { onDeleteExpense(expense) }
+                                onDelete = { onDeleteExpense(expense) },
+                                onEdit = { onEditExpense(expense) }
                             )
                         }
                     }
@@ -383,10 +385,13 @@ private fun ExpenseItem(
     expense: Expense,
     isExcluded: Boolean,
     selectedView: FinanceView,
-    onDelete: () -> Unit
+    onDelete: () -> Unit,
+    onEdit: () -> Unit
 ) {
     ElevatedCard(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onEdit),
         shape = MaterialTheme.shapes.medium
     ) {
         Row(
@@ -476,6 +481,7 @@ private fun ExpenseListScreenPreview() {
             ),
             onAddClick = {},
             onDeleteExpense = {},
+            onEditExpense = {},
             onNavigateDate = {},
             onViewModeChange = {},
             onFinanceViewChange = {},

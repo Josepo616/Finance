@@ -41,7 +41,8 @@ data class ExpenseUiState(
     val isCurrentMonth: Boolean = true,
     val isCurrentDay: Boolean = true,
     val excludeExemptFromTotal: Boolean = false,
-    val selectedView: FinanceView = FinanceView.CASH_FLOW
+    val selectedView: FinanceView = FinanceView.CASH_FLOW,
+    val editingExpense: Expense? = null
 )
 
 class ExpenseViewModel(
@@ -264,12 +265,92 @@ class ExpenseViewModel(
     }
 
     fun showAddForm() {
-        _uiState.value = _uiState.value.copy(showAddScreen = true)
+        _uiState.value = _uiState.value.copy(showAddScreen = true, editingExpense = null)
         loadCategories() // Refresh categories when showing form
     }
 
+    fun startEditingExpense(expense: Expense) {
+        _uiState.value = _uiState.value.copy(showAddScreen = true, editingExpense = expense)
+        loadCategories()
+    }
+
+    fun updateExpense(updatedExpense: Expense) {
+        val oldExpense = _uiState.value.editingExpense ?: return
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isSaving = true, errorMessage = null, saveSuccess = false)
+            try {
+                val budget = budgetRepository.getBudget(uid)
+                
+                // Revert old expense
+                val oldCategory = if (oldExpense.categoryId.isNotBlank()) {
+                    categoryRepository.getCategoryById(uid, oldExpense.categoryId)
+                } else null
+                val oldExclude = oldCategory?.excludeFromWeeklyLimit ?: false || 
+                                 (oldExpense.budgetAllocation != BudgetAllocation.WEEKLY && oldExpense.budgetAllocation != BudgetAllocation.DAILY)
+
+                var adjustedBudget = budget.copy(availableFunds = budget.availableFunds + oldExpense.amount)
+                if (!oldExclude) {
+                    adjustedBudget = adjustedBudget.copy(currentWeeklyLimit = adjustedBudget.currentWeeklyLimit + oldExpense.personalShare)
+                }
+                if (oldExpense.budgetAllocation == BudgetAllocation.DAILY) {
+                    adjustedBudget = adjustedBudget.copy(currentDailyLimit = adjustedBudget.currentDailyLimit + oldExpense.personalShare)
+                }
+                if (oldExpense.budgetAllocation == BudgetAllocation.DAILY ||
+                    oldExpense.budgetAllocation == BudgetAllocation.WEEKLY ||
+                    oldExpense.budgetAllocation == BudgetAllocation.MONTHLY) {
+                    adjustedBudget = adjustedBudget.copy(currentMonthlyLimit = adjustedBudget.currentMonthlyLimit + oldExpense.personalShare)
+                }
+
+                // Apply new expense
+                val newCategory = if (updatedExpense.categoryId.isNotBlank()) {
+                    categoryRepository.getCategoryById(uid, updatedExpense.categoryId)
+                } else null
+                val newExclude = newCategory?.excludeFromWeeklyLimit ?: false || 
+                                 (updatedExpense.budgetAllocation != BudgetAllocation.WEEKLY && updatedExpense.budgetAllocation != BudgetAllocation.DAILY)
+
+                adjustedBudget = adjustedBudget.copy(availableFunds = adjustedBudget.availableFunds - updatedExpense.amount)
+                if (!newExclude) {
+                    adjustedBudget = adjustedBudget.copy(currentWeeklyLimit = adjustedBudget.currentWeeklyLimit - updatedExpense.personalShare)
+                }
+                if (updatedExpense.budgetAllocation == BudgetAllocation.DAILY) {
+                    adjustedBudget = adjustedBudget.copy(currentDailyLimit = adjustedBudget.currentDailyLimit - updatedExpense.personalShare)
+                }
+                if (updatedExpense.budgetAllocation == BudgetAllocation.DAILY ||
+                    updatedExpense.budgetAllocation == BudgetAllocation.WEEKLY ||
+                    updatedExpense.budgetAllocation == BudgetAllocation.MONTHLY) {
+                    adjustedBudget = adjustedBudget.copy(currentMonthlyLimit = adjustedBudget.currentMonthlyLimit - updatedExpense.personalShare)
+                }
+
+                budgetRepository.saveBudget(uid, adjustedBudget)
+                expenseRepository.updateExpense(uid, updatedExpense)
+
+                auditRepository.logAction(
+                    uid, AuditLog(
+                        action = "UPDATE_EXPENSE",
+                        details = "Updated expense: ${updatedExpense.description} (${updatedExpense.categoryName})",
+                        amount = updatedExpense.amount,
+                        metadata = mapOf("expenseId" to updatedExpense.id)
+                    )
+                )
+
+                _uiState.value = _uiState.value.copy(
+                    isSaving = false,
+                    saveSuccess = true,
+                    showAddScreen = false,
+                    editingExpense = null
+                )
+                loadExpenses()
+            } catch (e: Exception) {
+                _uiState.value = _uiState.value.copy(
+                    isSaving = false,
+                    errorMessage = e.message ?: "Failed to update expense"
+                )
+            }
+        }
+    }
+
     fun hideAddForm() {
-        _uiState.value = _uiState.value.copy(showAddScreen = false)
+        _uiState.value = _uiState.value.copy(showAddScreen = false, editingExpense = null)
     }
 
     fun clearSnackbar() {

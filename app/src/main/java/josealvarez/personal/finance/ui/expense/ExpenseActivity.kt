@@ -56,6 +56,7 @@ class ExpenseActivity : ComponentActivity() {
                         AddExpenseScreen(
                             uiState = uiState,
                             onAddExpense = { expense -> viewModel.addExpense(expense) },
+                            onUpdateExpense = { expense -> viewModel.updateExpense(expense) },
                             onBack = { viewModel.hideAddForm() },
                             onSnackbarDismissed = { viewModel.clearSnackbar() }
                         )
@@ -104,6 +105,7 @@ class ExpenseActivity : ComponentActivity() {
                                 uiState = uiState,
                                 onAddClick = { viewModel.showAddForm() },
                                 onDeleteExpense = { expense -> viewModel.deleteExpense(expense) },
+                                onEditExpense = { expense -> viewModel.startEditingExpense(expense) },
                                 onNavigateDate = { delta -> viewModel.navigateDate(delta) },
                                 onViewModeChange = { mode -> viewModel.setViewMode(mode) },
                                 onFinanceViewChange = { view -> viewModel.selectFinanceView(view) },

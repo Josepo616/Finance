@@ -26,26 +26,32 @@ import java.util.Locale
 fun AddExpenseScreen(
     uiState: ExpenseUiState,
     onAddExpense: (Expense) -> Unit,
+    onUpdateExpense: (Expense) -> Unit,
     onBack: () -> Unit,
     onSnackbarDismissed: () -> Unit
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
     val dateFormat = remember { SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()) }
 
-    var amount by remember { mutableStateOf("") }
+    val editing = uiState.editingExpense
+    var amount by remember { mutableStateOf(editing?.amount?.toString() ?: "") }
     var selectedCategory by remember { mutableStateOf<Category?>(null) }
-    var description by remember { mutableStateOf("") }
-    var dateText by remember { mutableStateOf(dateFormat.format(Date())) }
-    var budgetAllocation by remember { mutableStateOf(BudgetAllocation.WEEKLY) }
-    var isShared by remember { mutableStateOf(false) }
-    var personalShareText by remember { mutableStateOf("") }
+    var description by remember { mutableStateOf(editing?.description ?: "") }
+    var dateText by remember { mutableStateOf(editing?.date ?: dateFormat.format(Date())) }
+    var budgetAllocation by remember { mutableStateOf(editing?.budgetAllocation ?: BudgetAllocation.WEEKLY) }
+    var isShared by remember { mutableStateOf(editing?.isShared ?: false) }
+    var personalShareText by remember { mutableStateOf(editing?.personalShare?.toString() ?: "") }
     var showDatePicker by remember { mutableStateOf(false) }
     var categoryExpanded by remember { mutableStateOf(false) }
     var budgetExpanded by remember { mutableStateOf(false) }
 
     LaunchedEffect(uiState.categories) {
         if (selectedCategory == null && uiState.categories.isNotEmpty()) {
-            selectedCategory = uiState.categories.find { it.name == "Other" } ?: uiState.categories.firstOrNull()
+            selectedCategory = if (editing != null) {
+                uiState.categories.find { it.id == editing.categoryId } ?: uiState.categories.firstOrNull()
+            } else {
+                uiState.categories.find { it.name == "Other" } ?: uiState.categories.firstOrNull()
+            }
         }
     }
 
@@ -85,7 +91,7 @@ fun AddExpenseScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Add Expense") },
+                title = { Text(if (uiState.editingExpense != null) "Edit Expense" else "Add Expense") },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(
@@ -289,18 +295,34 @@ fun AddExpenseScreen(
                 onClick = {
                     if (parsedAmount > 0 && selectedCategory != null && (!isShared || !isPersonalShareInvalid)) {
                         val finalPersonalShare = if (isShared) parsedPersonalShare ?: parsedAmount else parsedAmount
-                        onAddExpense(
-                            Expense(
-                                amount = parsedAmount,
-                                categoryId = selectedCategory!!.id,
-                                categoryName = selectedCategory!!.name,
-                                description = description,
-                                date = dateText,
-                                budgetAllocation = budgetAllocation,
-                                isShared = isShared,
-                                personalShare = finalPersonalShare
+                        val editing = uiState.editingExpense
+                        if (editing != null) {
+                            onUpdateExpense(
+                                editing.copy(
+                                    amount = parsedAmount,
+                                    categoryId = selectedCategory!!.id,
+                                    categoryName = selectedCategory!!.name,
+                                    description = description,
+                                    date = dateText,
+                                    budgetAllocation = budgetAllocation,
+                                    isShared = isShared,
+                                    personalShare = finalPersonalShare
+                                )
                             )
-                        )
+                        } else {
+                            onAddExpense(
+                                Expense(
+                                    amount = parsedAmount,
+                                    categoryId = selectedCategory!!.id,
+                                    categoryName = selectedCategory!!.name,
+                                    description = description,
+                                    date = dateText,
+                                    budgetAllocation = budgetAllocation,
+                                    isShared = isShared,
+                                    personalShare = finalPersonalShare
+                                )
+                            )
+                        }
                     }
                 },
                 modifier = Modifier.fillMaxWidth(),
@@ -314,7 +336,7 @@ fun AddExpenseScreen(
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                 }
-                Text("Add Expense")
+                Text(if (uiState.editingExpense != null) "Save Changes" else "Add Expense")
             }
         }
     }
@@ -343,6 +365,7 @@ private fun AddExpenseScreenPreview() {
                 )
             ),
             onAddExpense = {},
+            onUpdateExpense = {},
             onBack = {},
             onSnackbarDismissed = {}
         )
